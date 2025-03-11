@@ -24,6 +24,21 @@ public static class Utils
                 );
         }
 
+        if (typeof(ValueType) == typeof(DateTime) || typeof(ValueType) == typeof(DateTime?))
+        {
+            var dateTimeString = Get<string>(json, key);
+
+            if (DateTime.TryParse(dateTimeString, out DateTime dateTime))
+                return (ValueType)(object)dateTime;
+            else if (double.TryParse(dateTimeString, out double unixTimestamp))
+                return (ValueType)(object)DateTimeOffset.FromUnixTimeSeconds((long)unixTimestamp).DateTime;
+            else
+                throw new ResultException(
+                    $"JSON object `{json}` does not have a value for "
+                    + $"key `{key}` with type `{typeof(ValueType)}`"
+                );
+        }
+
         try
         {
             return json[key].ToObject<ValueType>();
