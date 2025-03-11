@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace IndicoToolkit.Results;
@@ -16,7 +13,7 @@ public class PrettyPrint
     {
         var properties = GetType().GetProperties()
             .Where(prop => prop.GetCustomAttribute<NoPrintAttribute>() == null)
-            .Select(prop => $"    {prop.Name} = {(prop.GetValue(this) ?? "null").ToString().Replace("\n", "\n    ")}");
+            .Select(prop => $"    {prop.Name} = {prop.GetValue(this)?.ToString()?.Replace("\n", "\n    ") ?? "null"}");
 
         return $"{GetType().Name} {{\n{string.Join(",\n", properties)}\n}}";
     }
@@ -30,7 +27,7 @@ public class PrettyPrintList<T> : List<T>
 
     public override string ToString()
     {
-        var items = this.Select(item => $"    {item?.ToString().Replace("\n", "\n    ")}");
+        var items = this.Select(item => $"    {item?.ToString()?.Replace("\n", "\n    ") ?? "null"}");
         return $"{GetType().Name} {{\n{string.Join(",\n", items)}\n}}";
     }
 }
