@@ -80,7 +80,7 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
         Document? document = null,
         ModelGroup? model = null,
         string? modelName = null,
-        TaskType? modelTaskType = null,
+        ModelGroupType? modelType = null,
         Review? review = null,
         ReviewType? reviewType = null,
         string? label = null,
@@ -109,8 +109,8 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
         if (modelName != null)
             predicates.Add(pred => pred.Model.Name == modelName);
 
-        if (modelTaskType != null)
-            predicates.Add(pred => pred.Model.TaskType == modelTaskType);
+        if (modelType != null)
+            predicates.Add(pred => pred.Model.Type == modelType);
 
         if (review != null)
             predicates.Add(pred => pred.Review == review);
@@ -206,7 +206,7 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
             var model = pair.Key;
             var predictions = pair.Value;
 
-            if (model.TaskType == TaskType.CLASSIFICATION)
+            if (model.Type == ModelGroupType.CLASSIFICATION)
                 changes[model.Name] = predictions.Single().ToV1Json();
             else
                 changes[model.Name] = new JArray(
