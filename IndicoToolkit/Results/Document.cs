@@ -8,8 +8,7 @@ public class Document : PrettyPrint
 {
     public int? Id { get; init; }  // v1 result files don't include Document IDs.
     public string? Name { get; init; }  // v1 result files don't include Document Names.
-    public string EtlOutputUrl { get; init; }
-    public string FullTextUrl { get; init; }
+    public string EtlOutputUri { get; init; }
 
     // Auto review changes must reproduce all model sections that were present in the
     // original result file. This may not be possible from the predictions alone--if a
@@ -23,15 +22,13 @@ public class Document : PrettyPrint
     // Create a Document from the root structure of a v1 result file.
     public static Document FromV1Json(JToken json)
     {
-        var etlOutputUrl = Utils.Get<string>(json, "etl_output");
-        var fullTextUrl = etlOutputUrl.Replace("etl_output.json", "full_text.txt");
+        var etlOutputUri = Utils.Get<string>(json, "etl_output");
 
         return new Document
         {
             Id = null,
             Name = null,
-            EtlOutputUrl = etlOutputUrl,
-            FullTextUrl = fullTextUrl,
+            EtlOutputUri = etlOutputUri,
             ModelSections = new HashSet<string>(),
         };
     }
@@ -39,15 +36,13 @@ public class Document : PrettyPrint
     // Create a Document from a v3 `submission_results` list item.
     public static Document FromV3Json(JToken json)
     {
-        var etlOutputUrl = Utils.Get<string>(json, "etl_output");
-        var fullTextUrl = etlOutputUrl.Replace("etl_output.json", "full_text.txt");
+        var etlOutputUri = Utils.Get<string>(json, "etl_output");
 
         return new Document
         {
             Id = Utils.Get<int>(json, "submissionfile_id"),
             Name = Utils.Get<string>(json, "input_filename"),
-            EtlOutputUrl = etlOutputUrl,
-            FullTextUrl = fullTextUrl,
+            EtlOutputUri = etlOutputUri,
             ModelSections = new HashSet<string>(),
         };
     }
