@@ -5,59 +5,53 @@ namespace IndicoToolkit.Results;
 
 public static class Utils
 {
-    // Get the value of `key` from `json` if it exists and is of type `ValueType`.
-    // Raise an exception otherwise.
-    public static ValueType Get<ValueType>(JToken? json, string key)
+    // Return the value obtained by traversing `json` using `keys` as indices if that
+    // value has type `ValueType`. Throw a `ResultException` otherwise.
+    public static ValueType Get<ValueType>(JToken? json, params object[] keys)
     {
-        if (json == null || json[key] == null || json[key].Type == JTokenType.Null)
+        foreach (var key in keys)
         {
-            var type = typeof(ValueType);
-            var isNullableValueType = Nullable.GetUnderlyingType(type) != null;
-            var isReferenceType = !type.IsValueType;
-
-            if (isNullableValueType || isReferenceType)
-                return default;
+            if (key is string strKey && json?.Type == JTokenType.Object)
+                json = json[key];
+            else if (key is int intKey && json?.Type == JTokenType.Array)
+                json = json[key];
             else
                 throw new ResultException(
-                    $"JSON object `{json}` does not have a value for "
-                    + $"key `{key}` with type `{typeof(ValueType)}`"
+                    $"JSON object `{json}` does not contain key `{key}`"
                 );
         }
 
-        if (typeof(ValueType) == typeof(DateTime) || typeof(ValueType) == typeof(DateTime?))
+        if (json == null || json.Type == JTokenType.Null)
         {
-            var dateTimeString = Get<string>(json, key);
+            var type = typeof(ValueType);
+            var isNullableValueType = Nullable.GetUnderlyingType(type) != null;
 
-            if (DateTime.TryParse(dateTimeString, out DateTime dateTime))
-                return (ValueType)(object)dateTime;
-            else if (double.TryParse(dateTimeString, out double unixTimestamp))
-                return (ValueType)(object)DateTimeOffset.FromUnixTimeSeconds((long)unixTimestamp).DateTime;
+            if (isNullableValueType)
+                return default;
             else
                 throw new ResultException(
-                    $"JSON object `{json}` does not have a value for "
-                    + $"key `{key}` with type `{typeof(ValueType)}`"
+                    $"value `{json}` for key `{keys.Last()}` is not of type `{typeof(ValueType)}`"
                 );
         }
 
         try
         {
-            return json[key].ToObject<ValueType>();
+            return json.ToObject<ValueType>();
         }
         catch (System.Exception)
         {
             throw new ResultException(
-                $"JSON object `{json}` does not have a value for "
-                + $"key `{key}` with type `{typeof(ValueType)}`"
+                $"value `{json}` for key `{keys.Last()}` is not of type `{typeof(ValueType)}`"
             );
         }
     }
 
-    // Determine whether `json` has `key` with a value of type `ValueType`.
-    public static bool Has<ValueType>(JToken? json, string key)
+    // Determine if `json` can be traversed using `keys` to a value of type `ValueType`.
+    public static bool Has<ValueType>(JToken? json, params object[] keys)
     {
         try
         {
-            Get<ValueType>(json, key);
+            Get<ValueType>(json, keys);
             return true;
         }
         catch (System.Exception)
