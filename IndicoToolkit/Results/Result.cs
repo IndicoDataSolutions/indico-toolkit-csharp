@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace IndicoToolkit.Results;
 
@@ -98,6 +99,9 @@ public class Result : PrettyPrint
             }
         }
 
+        foreach (var erroredFileJson in Utils.Get<JObject>(json, "errored_files"))
+            documents.Add(Document.FromErroredFileJson(erroredFileJson.Value));
+
         documents.Sort((left, right) => left.Id.CompareTo(right.Id));
 
         return new Result
@@ -178,6 +182,19 @@ public class Result : PrettyPrint
             )
             {
                 prediction["groupings"] = new JArray();
+            }
+        }
+
+        // Parse filenames for errored files.
+        foreach (var erroredFile in json["errored_files"] as JObject)
+        {
+            var file = erroredFile.Value;
+
+            if (!Utils.Has<string>(file, "input_filename"))
+            {
+                var reason = Utils.Get<string>(file, "reason");
+                var match = Regex.Match(reason, @"file '([^']*)' with id");
+                file["input_filename"] = match.Success ? match.Groups[1].Value : "";
             }
         }
 

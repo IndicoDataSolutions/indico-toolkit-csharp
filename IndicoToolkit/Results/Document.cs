@@ -9,6 +9,10 @@ public class Document : PrettyPrint
     public int Id { get; init; }
     public string Name { get; init; }
     public string EtlOutputUri { get; init; }
+    public bool Failed { get; init; }
+    public string Error { get; init; }
+    public string Traceback { get; init; }
+
 
     // Auto review changes must reproduce all model sections that were present in the
     // original result file. This may not be possible from the predictions alone--if a
@@ -27,6 +31,27 @@ public class Document : PrettyPrint
             Id = Utils.Get<int>(json, "submissionfile_id"),
             Name = Utils.Get<string>(json, "input_filename"),
             EtlOutputUri = Utils.Get<string>(json, "etl_output"),
+            Failed = false,
+            Error = "",
+            Traceback = "",
+            ModelSections = new HashSet<string>(),
+        };
+    }
+
+    // Create a `Document` from an `errored_files` list item.
+    public static Document FromErroredFileJson(JToken json)
+    {
+        var traceback = Utils.Get<string>(json, "error");
+        var error = traceback.Split("\n").Last().Trim();
+
+        return new Document
+        {
+            Id = Utils.Get<int>(json, "submissionfile_id"),
+            Name = Utils.Get<string>(json, "input_filename"),
+            EtlOutputUri = "",
+            Failed = true,
+            Error = error,
+            Traceback = traceback,
             ModelSections = new HashSet<string>(),
         };
     }
