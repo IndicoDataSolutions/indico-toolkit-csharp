@@ -9,8 +9,8 @@ public class Unbundling : Prediction
 {
     public List<int> Pages { get; set; }
 
-    // Create a Unbundling from a v3 prediction JSON.
-    public static Unbundling FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
+    // Create an `Unbundling` from a prediction JSON.
+    public static Unbundling FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
         var spans = Utils.Get<JArray>(json, "spans");
 
@@ -26,7 +26,8 @@ public class Unbundling : Prediction
         };
     }
 
-    public override JObject ToV3Json()
+    // Create JSON for auto review changes.
+    public override JObject ToJson()
     {
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);

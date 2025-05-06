@@ -188,46 +188,9 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
     // the predictions in this prediction list and the documents and version of `result`.
     public dynamic ToChanges(Result result)
     {
-        if (result.Version == 1)
-            return ToV1Changes(result.Documents.Single());
-        else if (result.Version == 3)
-            return ToV3Changes(result.Documents);
-        else
-            throw new ResultException($"unsupported file version `{result.Version}`");
-    }
-
-    // Create a v1 JObject for the `changes` argument of `SubmitReview`.
-    private JObject ToV1Changes(Document document)
-    {
-        var changes = new JObject();
-
-        foreach (var pair in this.GroupBy<ModelGroup>(prediction => prediction.Model))
-        {
-            var model = pair.Key;
-            var predictions = pair.Value;
-
-            if (model.Type == ModelGroupType.CLASSIFICATION)
-                changes[model.Name] = predictions.Single().ToV1Json();
-            else
-                changes[model.Name] = new JArray(
-                    predictions.Select(prediction => prediction.ToV1Json())
-                );
-        }
-
-        // Reproduce empty models sections from the original result file.
-        foreach (var modelName in document.ModelSections)
-            if (!changes.ContainsKey(modelName))
-                changes[modelName] = new JArray();
-
-        return changes;
-    }
-
-    // Create a v3 JArray for the `changes` argument of `SubmitReview`.
-    private JArray ToV3Changes(List<Document> documents)
-    {
         var changes = new JArray();
 
-        foreach (var document in documents)
+        foreach (var document in result.Documents)
         {
             var modelResults = new JObject();
             var predictionsByModel = this.Where(
@@ -242,7 +205,7 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
                 var modelPredictions = modelPair.Value;
 
                 modelResults[model.Id.ToString()] = new JArray(
-                    modelPredictions.Select(prediction => prediction.ToV3Json())
+                    modelPredictions.Select(prediction => prediction.ToJson())
                 );
             }
 

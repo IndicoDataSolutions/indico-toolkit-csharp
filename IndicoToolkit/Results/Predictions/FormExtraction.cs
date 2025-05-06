@@ -36,8 +36,8 @@ public class FormExtraction : Extraction
             throw new ResultException($"unsupported form extraction type `{formExtractionType}`");
     }
 
-    // Create a FormExtraction from a prediction JSON.
-    public static FormExtraction _FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    // Create a `FormExtraction` from a prediction JSON.
+    public static FormExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
         var normalized = Utils.Get<JObject>(json, "normalized");
         var structured = Utils.Get<JObject>(normalized, "structured");
@@ -64,17 +64,8 @@ public class FormExtraction : Extraction
         };
     }
 
-    public static FormExtraction FromV1Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        return _FromJson(document, model, review, json);
-    }
-
-    public static FormExtraction FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        return _FromJson(document, model, review, json);
-    }
-
-    public JObject _ToJson()
+    // Create JSON for auto review changes.
+    public override JObject ToJson()
     {
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
@@ -106,15 +97,5 @@ public class FormExtraction : Extraction
             Extras["rejected"] = true;
 
         return Extras;
-    }
-
-    public override JObject ToV1Json()
-    {
-        return _ToJson();
-    }
-
-    public override JObject ToV3Json()
-    {
-        return _ToJson();
     }
 }

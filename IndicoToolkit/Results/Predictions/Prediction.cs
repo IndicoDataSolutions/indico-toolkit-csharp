@@ -23,40 +23,23 @@ public class Prediction : PrettyPrint
         set => Confidences[Label] = value;
     }
 
-    // Create a Prediction subtype appropriate for `model.Type` from a prediction JSON.
-    public static Prediction FromV1Json(Document document, ModelGroup model, Review? review, JToken json)
+    // Create a `Prediction` subtype appropriate for `model.Type` from a prediction JSON.
+    public static Prediction FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
         if (model.Type == ModelGroupType.CLASSIFICATION)
-            return Classification.FromV1Json(document, model, review, json);
+            return Classification.FromJson(document, model, review, json);
         else if (model.Type == ModelGroupType.DOCUMENT_EXTRACTION)
-            return DocumentExtraction.FromV1Json(document, model, review, json);
+            return DocumentExtraction.FromJson(document, model, review, json);
         else if (model.Type == ModelGroupType.FORM_EXTRACTION)
-            return FormExtraction.FromV1Json(document, model, review, json);
-        else
-            throw new ResultException($"unsupported v1 task type `{model.Type}`");
-    }
-
-    // Create a Prediction subtype appropriate for `model.Type` from a prediction JSON.
-    public static Prediction FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        if (model.Type == ModelGroupType.CLASSIFICATION)
-            return Classification.FromV3Json(document, model, review, json);
-        else if (model.Type == ModelGroupType.DOCUMENT_EXTRACTION)
-            return DocumentExtraction.FromV3Json(document, model, review, json);
-        else if (model.Type == ModelGroupType.FORM_EXTRACTION)
-            return FormExtraction.FromV3Json(document, model, review, json);
+            return FormExtraction.FromJson(document, model, review, json);
         else if (model.Type == ModelGroupType.UNBUNDLING)
-            return Unbundling.FromV3Json(document, model, review, json);
+            return Unbundling.FromJson(document, model, review, json);
         else
-            throw new ResultException($"unsupported v3 task type `{model.Type}`");
+            throw new ResultException($"unsupported task type `{model.Type}`");
     }
 
-    public virtual JObject ToV1Json()
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual JObject ToV3Json()
+    // Create JSON for auto review changes.
+    public virtual JObject ToJson()
     {
         throw new NotImplementedException();
     }

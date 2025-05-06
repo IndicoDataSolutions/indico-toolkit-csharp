@@ -21,7 +21,7 @@ public class Group : PrettyPrint
         };
     }
 
-    public virtual JObject ToJson()
+    public JObject ToJson()
     {
         return new JObject
         {

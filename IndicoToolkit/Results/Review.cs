@@ -32,7 +32,7 @@ public class Review : PrettyPrint
             throw new ResultException($"unsupported review type `{reviewType}`");
     }
 
-    // Create a Review from a v1 `reviews_meta` or a v3 `reviews` list item.
+    // Create a Review from a `reviews` list item.
     public static Review FromJson(JToken json)
     {
         return new Review

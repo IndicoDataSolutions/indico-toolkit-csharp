@@ -6,8 +6,8 @@ namespace IndicoToolkit.Results;
 
 public class Document : PrettyPrint
 {
-    public int? Id { get; init; }  // v1 result files don't include Document IDs.
-    public string? Name { get; init; }  // v1 result files don't include Document Names.
+    public int Id { get; init; }
+    public string Name { get; init; }
     public string EtlOutputUri { get; init; }
 
     // Auto review changes must reproduce all model sections that were present in the
@@ -19,30 +19,14 @@ public class Document : PrettyPrint
     [NoPrint]
     public HashSet<string> ModelSections { get; init; }
 
-    // Create a Document from the root structure of a v1 result file.
-    public static Document FromV1Json(JToken json)
+    // Create a `Document` from a `submission_results` list item.
+    public static Document FromJson(JToken json)
     {
-        var etlOutputUri = Utils.Get<string>(json, "etl_output");
-
-        return new Document
-        {
-            Id = null,
-            Name = null,
-            EtlOutputUri = etlOutputUri,
-            ModelSections = new HashSet<string>(),
-        };
-    }
-
-    // Create a Document from a v3 `submission_results` list item.
-    public static Document FromV3Json(JToken json)
-    {
-        var etlOutputUri = Utils.Get<string>(json, "etl_output");
-
         return new Document
         {
             Id = Utils.Get<int>(json, "submissionfile_id"),
             Name = Utils.Get<string>(json, "input_filename"),
-            EtlOutputUri = etlOutputUri,
+            EtlOutputUri = Utils.Get<string>(json, "etl_output"),
             ModelSections = new HashSet<string>(),
         };
     }

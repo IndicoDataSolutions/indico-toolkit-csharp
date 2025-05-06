@@ -11,34 +11,8 @@ public class DocumentExtraction : Extraction
     public int End { get; set; }
     public HashSet<Group> Groups { get; set; }
 
-    // Create an DocumentExtraction from a v1 prediction object.
-    public static DocumentExtraction FromV1Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        var normalized = Utils.Get<JObject>(json, "normalized");
-
-        return new DocumentExtraction
-        {
-            Document = document,
-            Model = model,
-            Review = review,
-            Label = Utils.Get<string>(json, "label"),
-            Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
-            Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
-            Rejected = Utils.Has<bool>(json, "rejeted") && Utils.Get<bool>(json, "rejeted"),
-            Text = Utils.Get<string>(normalized, "formatted"),
-            Page = Utils.Get<int>(json, "page_num"),
-            Start = Utils.Get<int>(json, "start"),
-            End = Utils.Get<int>(json, "end"),
-            Groups = new HashSet<Group>(
-                Utils.Get<JArray>(json, "groupings")
-                    .Select(value => Group.FromJson(value))
-            ),
-            Extras = json as JObject,
-        };
-    }
-
-    // Create an DocumentExtraction from a v3 prediction object.
-    public static DocumentExtraction FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
+    // Create an `DocumentExtraction` from a prediction object.
+    public static DocumentExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
         var normalized = Utils.Get<JObject>(json, "normalized");
         var span = Utils.Get<JArray>(json, "spans").First;
@@ -64,25 +38,8 @@ public class DocumentExtraction : Extraction
         };
     }
 
-    public override JObject ToV1Json()
-    {
-        Extras["label"] = Label;
-        Extras["confidence"] = JObject.FromObject(Confidences);
-        Extras["normalized"]["formatted"] = Text;
-        Extras["page_num"] = Page;
-        Extras["start"] = Start;
-        Extras["end"] = End;
-        Extras["groupings"] = new JArray(Groups.Select(group => group.ToJson()));
-
-        if (Accepted)
-            Extras["accepted"] = true;
-        else if (Rejected)
-            Extras["rejeted"] = true;
-
-        return Extras;
-    }
-
-    public override JObject ToV3Json()
+    // Create JSON for auto review changes.
+    public override JObject ToJson()
     {
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
