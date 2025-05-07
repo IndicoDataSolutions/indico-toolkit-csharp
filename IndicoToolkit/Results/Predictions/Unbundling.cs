@@ -11,7 +11,7 @@ public record Unbundling : Prediction
     public ImmutableList<int> Pages => Spans.Select(span => span.Page).ToImmutableList();
 
     // Create an `Unbundling` from a prediction JSON.
-    public static new Unbundling FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new Unbundling FromJson(Document document, Model model, Review? review, JToken json)
     {
         return new()
         {

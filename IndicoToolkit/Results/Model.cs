@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public enum ModelGroupType
+public enum ModelType
 {
     CLASSIFICATION,
     DOCUMENT_EXTRACTION,
@@ -15,42 +15,42 @@ public enum ModelGroupType
 }
 
 
-public record ModelGroup
+public record Model
 (
     int Id,
     string Name,
-    ModelGroupType Type
+    ModelType Type
 )
 {
     // Determine the task type of a model from its string representation.
-    public static ModelGroupType ModelGroupTypeFromString(string taskType)
+    public static ModelType ModelTypeFromString(string taskType)
     {
         if (taskType == "classification")
-            return ModelGroupType.CLASSIFICATION;
+            return ModelType.CLASSIFICATION;
         else if (taskType == "annotation")
-            return ModelGroupType.DOCUMENT_EXTRACTION;
+            return ModelType.DOCUMENT_EXTRACTION;
         else if (taskType == "form_extraction")
-            return ModelGroupType.FORM_EXTRACTION;
+            return ModelType.FORM_EXTRACTION;
         else if (taskType == "genai_classification")
-            return ModelGroupType.GENAI_CLASSIFICATION;
+            return ModelType.GENAI_CLASSIFICATION;
         else if (taskType == "genai_annotation")
-            return ModelGroupType.GENAI_EXTRACTION;
+            return ModelType.GENAI_EXTRACTION;
         else if (taskType == "summarization")
-            return ModelGroupType.GENAI_SUMMARIZATION;
+            return ModelType.GENAI_SUMMARIZATION;
         else if (taskType == "classification_unbundling")
-            return ModelGroupType.UNBUNDLING;
+            return ModelType.UNBUNDLING;
         else
             throw new ResultException($"unsupported task type `{taskType}`");
     }
 
-    // Create a `ModelGroup` from a `modelgroup_metadata` list item.
-    public static ModelGroup FromJson(JToken json)
+    // Create a `Model` from a `modelgroup_metadata` list item.
+    public static Model FromJson(JToken json)
     {
         return new
         (
             Utils.Get<int>(json, "id"),
             Utils.Get<string>(json, "name"),
-            ModelGroupTypeFromString(Utils.Get<string>(json, "task_type"))
+            ModelTypeFromString(Utils.Get<string>(json, "task_type"))
         );
     }
 }

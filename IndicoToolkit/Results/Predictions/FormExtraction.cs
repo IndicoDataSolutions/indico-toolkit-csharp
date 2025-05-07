@@ -34,7 +34,7 @@ public record FormExtraction : Extraction
     }
 
     // Create a `FormExtraction` from a prediction JSON.
-    public static new FormExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new FormExtraction FromJson(Document document, Model model, Review? review, JToken json)
     {
         var structured = Utils.Get<JObject>(json, "normalized", "structured");
 

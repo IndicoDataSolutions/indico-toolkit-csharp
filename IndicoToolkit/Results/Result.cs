@@ -9,7 +9,7 @@ public record Result
     int Version,
     int SubmissionId,
     List<Document> Documents,
-    List<ModelGroup> Models,
+    List<Model> Models,
     PredictionList<Prediction> Predictions,
     List<Review> Reviews
 )
@@ -48,7 +48,7 @@ public record Result
             .ToList();
         var models = modelgroupMetadata.PropertyValues()
             .Concat(staticModelComponents)
-            .Select(ModelGroup.FromJson)
+            .Select(Model.FromJson)
             .OrderBy(model => model.Id)
             .ToList();
         var reviews = reviewMetadata

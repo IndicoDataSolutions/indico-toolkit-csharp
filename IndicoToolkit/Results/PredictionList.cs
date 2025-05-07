@@ -70,9 +70,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList<PredictionType> Where(
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
-        ModelGroup? model = null,
+        Model? model = null,
         string? modelName = null,
-        ModelGroupType? modelType = null,
+        ModelType? modelType = null,
         Review? review = null,
         ReviewType? reviewType = null,
         string? label = null,
@@ -191,7 +191,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
             var predictionsByModel = this.Where(
                 document: document
-            ).GroupBy<ModelGroup>(
+            ).GroupBy<Model>(
                 prediction => prediction.Model
             );
 

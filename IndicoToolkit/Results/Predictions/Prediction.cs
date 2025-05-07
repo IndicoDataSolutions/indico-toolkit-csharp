@@ -6,7 +6,7 @@ namespace IndicoToolkit.Results;
 public abstract record Prediction
 {
     public Document Document { get; set; }
-    public ModelGroup Model { get; set; }
+    public Model Model { get; set; }
     public Review? Review { get; set; }  // Pre-review predictions do not have an associated Review.
 
     public string Label { get; set; }
@@ -20,18 +20,18 @@ public abstract record Prediction
     }
 
     // Create a `Prediction` subtype appropriate for `model.Type` from a prediction JSON.
-    public static Prediction FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static Prediction FromJson(Document document, Model model, Review? review, JToken json)
     {
-        if (model.Type == ModelGroupType.CLASSIFICATION)
+        if (model.Type == ModelType.CLASSIFICATION)
             return Classification.FromJson(document, model, review, json);
-        else if (model.Type == ModelGroupType.DOCUMENT_EXTRACTION)
+        else if (model.Type == ModelType.DOCUMENT_EXTRACTION)
             return DocumentExtraction.FromJson(document, model, review, json);
-        else if (model.Type == ModelGroupType.FORM_EXTRACTION)
+        else if (model.Type == ModelType.FORM_EXTRACTION)
             return FormExtraction.FromJson(document, model, review, json);
-        else if (model.Type == ModelGroupType.UNBUNDLING)
+        else if (model.Type == ModelType.UNBUNDLING)
             return Unbundling.FromJson(document, model, review, json);
         else
-            throw new ResultException($"unsupported task type `{model.Type}`");
+            throw new ResultException($"unsupported model type `{model.Type}`");
     }
 
     // Create JSON for auto review changes.

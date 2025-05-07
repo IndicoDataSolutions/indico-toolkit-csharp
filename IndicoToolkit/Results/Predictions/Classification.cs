@@ -6,7 +6,7 @@ namespace IndicoToolkit.Results;
 public record Classification : Prediction
 {
     // Create a `Classification` from a prediction JSON.
-    public static new Classification FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new Classification FromJson(Document document, Model model, Review? review, JToken json)
     {
         return new()
         {

@@ -17,7 +17,7 @@ public record DocumentExtraction : Extraction
     public override int Page => Span.Page;
 
     // Create an `DocumentExtraction` from a prediction object.
-    public static new DocumentExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new DocumentExtraction FromJson(Document document, Model model, Review? review, JToken json)
     {
         return new()
         {
