@@ -184,7 +184,11 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
         foreach (var document in result.Documents)
         {
+            if (document.Failed) continue;
+
             var modelResults = new JObject();
+            var componentResults = new JObject();
+
             var predictionsByModel = this.Where(
                 document: document
             ).GroupBy<ModelGroup>(
@@ -193,25 +197,31 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
             foreach (var modelPair in predictionsByModel)
             {
-                var model = modelPair.Key;
-                var modelPredictions = modelPair.Value;
-
-                modelResults[model.Id.ToString()] = new JArray(
-                    modelPredictions.Select(prediction => prediction.ToJson())
+                var id = modelPair.Key.Id.ToString();
+                var predictions = new JArray(
+                    modelPair.Value.Select(prediction => prediction.ToJson())
                 );
+
+                if (document.ModelSections.Contains(id))
+                    modelResults[id] = predictions;
+                else
+                    componentResults[id] = predictions;
             }
 
-            // Reproduce empty model sections from the original result file.
             foreach (var modelId in document.ModelSections)
                 if (!modelResults.ContainsKey(modelId))
                     modelResults[modelId] = new JArray();
+
+            foreach (var componentId in document.ComponentSections)
+                if (!modelResults.ContainsKey(componentId))
+                    componentResults[componentId] = new JArray();
 
             changes.Add(
                 new JObject
                 {
                     ["submissionfile_id"] = document.Id,
                     ["model_results"] = modelResults,
-                    ["component_results"] = new JObject(),
+                    ["component_results"] = componentResults,
                 }
             );
         }

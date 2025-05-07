@@ -32,52 +32,64 @@ public record Result
         NormalizeJson(json);
 
         var submissionId = Utils.Get<int>(json, "submission_id");
-        var documents = new List<Document>();
-        var models = Utils.Get<JObject>(json, "modelgroup_metadata")
-            .PropertyValues()
-            .Select(value => ModelGroup.FromJson(value))
+        var submissionResults = Utils.Get<JArray>(json, "submission_results");
+        var modelgroupMetadata = Utils.Get<JObject>(json, "modelgroup_metadata");
+        var componentMetadata = Utils.Get<JObject>(json, "component_metadata");
+        var reviewMetadata = Utils.Get<JObject>(json, "reviews");
+        var erroredFiles = Utils.Get<JObject>(json, "errored_files");
+
+        var staticModelComponents = componentMetadata.PropertyValues().Where(
+            component => Utils.Get<string>(component, "component_type").ToLower() == "static_model"
+        );
+
+        var documents = submissionResults.Select(Document.FromJson)
+            .Concat(erroredFiles.PropertyValues().Select(Document.FromErroredFileJson))
+            .OrderBy(document => document.Id)
+            .ToList();
+        var models = modelgroupMetadata.PropertyValues()
+            .Concat(staticModelComponents)
+            .Select(ModelGroup.FromJson)
             .OrderBy(model => model.Id)
             .ToList();
-        var predictions = new PredictionList<Prediction>();
-        var reviews = Utils.Get<JObject>(json, "reviews")
+        var reviews = reviewMetadata
             .PropertyValues()
-            .Select(value => Review.FromJson(value))
+            .Select(Review.FromJson)
             .OrderBy(review => review.Id)
             .ToList();
 
+        var predictions = new PredictionList<Prediction>();
+
         foreach (var documentJson in Utils.Get<JArray>(json, "submission_results"))
         {
-            var document = Document.FromJson(documentJson);
-            documents.Add(document);
-
+            var documentId = Utils.Get<int>(documentJson, "submissionfile_id");
+            var document = documents.Where(document => document.Id == documentId).First();
             var modelResultsJson = Utils.Get<JObject>(documentJson, "model_results");
-            var originalJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL");
-            // Unreviewed results do not have a `FINAL` section.
+            var componentResultsJson = Utils.Get<JObject>(documentJson, "component_results");
+            var originalJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL").Properties()
+                .Concat(Utils.Get<JObject>(componentResultsJson, "ORIGINAL").Properties());
 
             // Parse pre-review predictions (which don't have an associated review).
             foreach (var modelJson in originalJson)
             {
-                var modelId = int.Parse(modelJson.Key);
+                var modelId = int.Parse(modelJson.Name);
                 var model = models.Where(model => model.Id == modelId).First();
 
                 foreach (var predictionJson in modelJson.Value as JArray)
                     predictions.Add(Prediction.FromJson(
                         document, model, review: null, predictionJson
                     ));
-
-                // Track model sections so empty ones can be reproduced in auto review changes.
-                document.ModelSections.Add(modelJson.Key);
             }
 
-            // Parse final predictions (which don't have an associated review).
+            // Parse final predictions (which are associated with the most recent review).
             if (reviews.Any())
             {
                 var review = reviews.Last();
-                var finalJson = Utils.Get<JObject>(modelResultsJson, "FINAL");
+                var finalJson = Utils.Get<JObject>(modelResultsJson, "FINAL").Properties()
+                    .Concat(Utils.Get<JObject>(componentResultsJson, "FINAL").Properties());
 
                 foreach (var modelJson in finalJson)
                 {
-                    var modelId = int.Parse(modelJson.Key);
+                    var modelId = int.Parse(modelJson.Name);
                     var model = models.Where(model => model.Id == modelId).First();
 
                     foreach (var predictionJson in modelJson.Value as JArray)
@@ -87,11 +99,6 @@ public record Result
                 }
             }
         }
-
-        foreach (var erroredFileJson in Utils.Get<JObject>(json, "errored_files"))
-            documents.Add(Document.FromErroredFileJson(erroredFileJson.Value));
-
-        documents.Sort((left, right) => left.Id.CompareTo(right.Id));
 
         return new
         (
