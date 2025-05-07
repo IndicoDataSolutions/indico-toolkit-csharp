@@ -70,17 +70,29 @@ public record FormExtraction : Extraction
 
         if (Type == FormExtractionType.CHECKBOX)
         {
-            Extras["normalized"]["structured"]["checked"] = Checked;
-            Extras["normalized"]["formatted"] = Checked ? "Checked" : "Unchecked";
+            Extras["normalized"]["structured"] = new JObject { ["checked"] = Checked };
+            var text = Checked ? "Checked" : "Unchecked";
+            Extras["normalized"]["formatted"] = text;
+            Extras["normalized"]["text"] = text;
+            Extras["text"] = text;
         }
         else if (Type == FormExtractionType.SIGNATURE)
         {
-            Extras["normalized"]["structured"]["signed"] = Signed;
-            Extras["normalized"]["formatted"] = Signed ? "Signed" : "Unsigned";
+            Extras["normalized"]["structured"] = new JObject { ["signed"] = Signed };
+            var text = Signed ? "Signed" : "Unsigned";
+            Extras["normalized"]["formatted"] = text;
+            // Don't overwrite the text of the signature stored in these attributes.
+            // Extras["normalized"]["text"] = text;
+            // Extras["text"] = text;
         }
-        else if (Type == FormExtractionType.TEXT)
+        else if (
+            Type == FormExtractionType.TEXT
+            && Text != Utils.Get<string>(Extras, "normalized", "formatted")
+        )
         {
             Extras["normalized"]["formatted"] = Text;
+            Extras["normalized"]["text"] = Text;
+            Extras["text"] = Text;
         }
 
         if (Accepted)

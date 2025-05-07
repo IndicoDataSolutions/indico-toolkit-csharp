@@ -30,7 +30,7 @@ public record DocumentExtraction : Extraction
             Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
             Groups = Utils.Get<JArray>(json, "groupings").Select(Group.FromJson).ToHashSet(),
-            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).ToList(),
+            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).Order().ToList(),
             Extras = json as JObject,
         };
     }
@@ -40,9 +40,15 @@ public record DocumentExtraction : Extraction
     {
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
-        Extras["normalized"]["formatted"] = Text;
         Extras["groupings"] = new JArray(Groups.Select(group => group.ToJson()));
         Extras["spans"] = new JArray(Spans.Select(span => span.ToJson()));
+
+        if (Text != Utils.Get<string>(Extras, "normalized", "formatted"))
+        {
+            Extras["normalized"]["formatted"] = Text;
+            Extras["normalized"]["text"] = Text;
+            Extras["text"] = Text;
+        }
 
         if (Accepted)
             Extras["accepted"] = true;
