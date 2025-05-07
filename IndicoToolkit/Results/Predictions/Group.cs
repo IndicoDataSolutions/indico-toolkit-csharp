@@ -14,6 +14,8 @@ public record Group
         ? this.Index.CompareTo(other.Index)
         : this.Id.CompareTo(other.Id);
 
+    public Group Next() => this with { Index = Index + 1 };
+
     public static Group FromJson(JToken json)
     {
         var idAndName = Utils.Get<string>(json, "group_id");

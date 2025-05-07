@@ -10,6 +10,8 @@ public record Span
     int End
 ) : IComparable<Span>
 {
+    public Range Range => Start..End;
+
     public int CompareTo(Span other)
     {
         if (this.Page == other.Page && this.Start == other.Start)
