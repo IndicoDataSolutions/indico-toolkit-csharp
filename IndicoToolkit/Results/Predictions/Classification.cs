@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
@@ -7,7 +6,7 @@ namespace IndicoToolkit.Results;
 public class Classification : Prediction
 {
     // Create a `Classification` from a prediction JSON.
-    public static Classification FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new Classification FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
         return new Classification
         {

@@ -1,22 +1,24 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace IndicoToolkit.Results;
 
 
 public class DocumentExtraction : Extraction
 {
-    public int Start { get; set; }
-    public int End { get; set; }
     public HashSet<Group> Groups { get; set; }
+    public List<Span> Spans { get; set; }
+
+    public Span Span
+    {
+        get => Spans.First();
+        set => Spans = new List<Span> { value };
+    }
+
+    public override int Page => Span.Page;
 
     // Create an `DocumentExtraction` from a prediction object.
-    public static DocumentExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new DocumentExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
-        var normalized = Utils.Get<JObject>(json, "normalized");
-        var span = Utils.Get<JArray>(json, "spans").First;
-
         return new DocumentExtraction
         {
             Document = document,
@@ -24,16 +26,11 @@ public class DocumentExtraction : Extraction
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
+            Text = Utils.Get<string>(json, "normalized", "formatted"),
             Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
-            Rejected = Utils.Has<bool>(json, "rejeted") && Utils.Get<bool>(json, "rejeted"),
-            Text = Utils.Get<string>(normalized, "formatted"),
-            Page = Utils.Get<int>(span, "page_num"),
-            Start = Utils.Get<int>(span, "start"),
-            End = Utils.Get<int>(span, "end"),
-            Groups = new HashSet<Group>(
-                Utils.Get<JArray>(json, "groupings")
-                    .Select(value => Group.FromJson(value))
-            ),
+            Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
+            Groups = Utils.Get<JArray>(json, "groupings").Select(Group.FromJson).ToHashSet(),
+            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).ToList(),
             Extras = json as JObject,
         };
     }
@@ -44,15 +41,13 @@ public class DocumentExtraction : Extraction
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
         Extras["normalized"]["formatted"] = Text;
-        Extras["spans"][0]["page_num"] = Page;
-        Extras["spans"][0]["start"] = Start;
-        Extras["spans"][0]["end"] = End;
         Extras["groupings"] = new JArray(Groups.Select(group => group.ToJson()));
+        Extras["spans"] = new JArray(Spans.Select(span => span.ToJson()));
 
         if (Accepted)
             Extras["accepted"] = true;
         else if (Rejected)
-            Extras["rejeted"] = true;
+            Extras["rejected"] = true;
 
         return Extras;
     }

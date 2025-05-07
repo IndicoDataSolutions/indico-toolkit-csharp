@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
@@ -15,13 +14,11 @@ public enum FormExtractionType
 public class FormExtraction : Extraction
 {
     public FormExtractionType Type { get; set; }
+    public Box Box { get; set; }
     public bool Checked { get; set; }
     public bool Signed { get; set; }
 
-    public int Top { get; set; }
-    public int Left { get; set; }
-    public int Right { get; set; }
-    public int Bottom { get; set; }
+    public override int Page => Box.Page;
 
     // Determine the form extraction type of a prediction from its string representation.
     public static FormExtractionType FormExtractionTypeFromString(string formExtractionType)
@@ -37,10 +34,9 @@ public class FormExtraction : Extraction
     }
 
     // Create a `FormExtraction` from a prediction JSON.
-    public static FormExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    public static new FormExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
-        var normalized = Utils.Get<JObject>(json, "normalized");
-        var structured = Utils.Get<JObject>(normalized, "structured");
+        var structured = Utils.Get<JObject>(json, "normalized", "structured");
 
         return new FormExtraction
         {
@@ -49,17 +45,13 @@ public class FormExtraction : Extraction
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
+            Text = Utils.Get<string>(json, "normalized", "formatted"),
             Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
-            Text = Utils.Get<string>(normalized, "formatted"),
-            Page = Utils.Get<int>(json, "page_num"),
             Type = FormExtractionTypeFromString(Utils.Get<string>(json, "type")),
+            Box = Box.FromJson(json),
             Checked = Utils.Has<bool>(structured, "checked") && Utils.Get<bool>(structured, "checked"),
             Signed = Utils.Has<bool>(structured, "signed") && Utils.Get<bool>(structured, "signed"),
-            Top = Utils.Get<int>(json, "top"),
-            Left = Utils.Get<int>(json, "left"),
-            Right = Utils.Get<int>(json, "right"),
-            Bottom = Utils.Get<int>(json, "bottom"),
             Extras = json as JObject,
         };
     }
@@ -70,11 +62,11 @@ public class FormExtraction : Extraction
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
         Extras["type"] = Type.ToString().ToLower();
-        Extras["page_num"] = Page;
-        Extras["top"] = Top;
-        Extras["left"] = Left;
-        Extras["right"] = Right;
-        Extras["bottom"] = Bottom;
+        Extras["page_num"] = Box.Page;
+        Extras["top"] = Box.Top;
+        Extras["left"] = Box.Left;
+        Extras["right"] = Box.Right;
+        Extras["bottom"] = Box.Bottom;
 
         if (Type == FormExtractionType.CHECKBOX)
         {

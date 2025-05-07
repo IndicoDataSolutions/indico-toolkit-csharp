@@ -1,17 +1,15 @@
-using Newtonsoft.Json.Linq;
-
 namespace IndicoToolkit.Results;
 
 
-public class Extraction : Prediction
+public abstract class Extraction : Prediction
 {
+    public string Text { get; set; }
     [NoPrint]
     public bool Accepted { get; protected set; }
     [NoPrint]
     public bool Rejected { get; protected set; }
 
-    public string Text { get; set; }
-    public int Page { get; set; }
+    public abstract int Page { get; }
 
     public void Accept()
     {

@@ -1,6 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
@@ -13,9 +11,13 @@ public class Group : PrettyPrint
 
     public static Group FromJson(JToken json)
     {
+        var idAndName = Utils.Get<string>(json, "group_id");
+        var idString = idAndName.Split(":").First();
+        var id = int.Parse(idString);
+
         return new Group
         {
-            Id = int.Parse(Utils.Get<string>(json, "group_id").Split(":")[0]),
+            Id = id,
             Name = Utils.Get<string>(json, "group_name"),
             Index = Utils.Get<int>(json, "group_index"),
         };

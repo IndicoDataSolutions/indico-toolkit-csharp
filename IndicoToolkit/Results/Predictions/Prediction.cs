@@ -1,11 +1,9 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
 
-public class Prediction : PrettyPrint
+public abstract class Prediction : PrettyPrint
 {
     public Document Document { get; init; }
     public ModelGroup Model { get; init; }
@@ -39,8 +37,5 @@ public class Prediction : PrettyPrint
     }
 
     // Create JSON for auto review changes.
-    public virtual JObject ToJson()
-    {
-        throw new NotImplementedException();
-    }
+    public abstract JObject ToJson();
 }
