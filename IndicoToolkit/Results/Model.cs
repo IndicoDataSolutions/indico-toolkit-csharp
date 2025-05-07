@@ -20,8 +20,10 @@ public record Model
     int Id,
     string Name,
     ModelType Type
-)
+) : IComparable<Model>
 {
+    public int CompareTo(Model other) => this.Id.CompareTo(other.Id);
+
     // Determine the task type of a model from its string representation.
     public static ModelType ModelTypeFromString(string taskType)
     {

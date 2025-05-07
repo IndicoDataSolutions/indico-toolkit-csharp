@@ -20,8 +20,10 @@ public record Document
     // per-document so that the empty sections can be reproduced later.
     ImmutableHashSet<string> ModelSections,
     ImmutableHashSet<string> ComponentSections
-)
+) : IComparable<Document>
 {
+    public int CompareTo(Document other) => this.Id.CompareTo(other.Id);
+
     // Create a `Document` from a `submission_results` list item.
     public static Document FromJson(JToken json)
     {

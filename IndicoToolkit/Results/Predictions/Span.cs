@@ -8,8 +8,18 @@ public record Span
     int Page,
     int Start,
     int End
-)
+) : IComparable<Span>
 {
+    public int CompareTo(Span other)
+    {
+        if (this.Page == other.Page && this.Start == other.Start)
+            return this.End.CompareTo(other.End);
+        else if (this.Page == other.Page)
+            return this.Start.CompareTo(other.Start);
+        else
+            return this.Page.CompareTo(other.Page);
+    }
+
     public static Span FromJson(JToken json)
     {
         return new

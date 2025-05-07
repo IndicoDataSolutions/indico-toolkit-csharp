@@ -18,8 +18,10 @@ public record Review
     string Notes,
     bool Rejected,
     ReviewType Type
-)
+) : IComparable<Review>
 {
+    public int CompareTo(Review other) => this.Id.CompareTo(other.Id);
+
     // Determine the review type from its string representation.
     public static ReviewType ReviewTypeFromString(string reviewType)
     {

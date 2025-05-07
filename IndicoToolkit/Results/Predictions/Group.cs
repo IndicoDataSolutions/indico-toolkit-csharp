@@ -8,8 +8,12 @@ public record Group
     int Id,
     string Name,
     int Index
-)
+) : IComparable<Group>
 {
+    public int CompareTo(Group other) => this.Id == other.Id
+        ? this.Index.CompareTo(other.Index)
+        : this.Id.CompareTo(other.Id);
+
     public static Group FromJson(JToken json)
     {
         var idAndName = Utils.Get<string>(json, "group_id");

@@ -10,8 +10,36 @@ public record Box
     int Left,
     int Right,
     int Bottom
-)
+) : IComparable<Box>
 {
+    public int CompareTo(Box other)
+    {
+        /*
+        Bounding boxes are sorted with vertical hysteresis. Those on the same line are
+        sorted left-to-right, even when later tokens are higher than earlier ones,
+        as long as they overlap vertically.
+
+        ┌──────────────────┐ ┌───────────────────┐
+        │        1         │ │         2         │
+        └──────────────────┘ │                   │
+                             └───────────────────┘
+                        ┌────────────────┐
+        ┌─────────────┐ │        4       │ ┌─────┐
+        │      3      │ └────────────────┘ │  5  │
+        └─────────────┘                    └─────┘
+        */
+        if (
+            this.Page < other.Page
+            || (this.Page == other.Page && this.Bottom < other.Top)
+            || (this.Page == other.Page && this.Top < other.Bottom && this.Left < other.Left)
+        )
+            return -1;
+        else if (this == other)
+            return 0;
+        else
+            return 1;
+    }
+
     public static Box FromJson(JToken json)
     {
         return new

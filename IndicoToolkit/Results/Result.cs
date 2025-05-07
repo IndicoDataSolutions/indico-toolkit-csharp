@@ -12,7 +12,7 @@ public record Result
     List<Model> Models,
     PredictionList<Prediction> Predictions,
     List<Review> Reviews
-)
+) : IComparable<Result>
 {
     public bool Rejected => Reviews.Any() && Reviews.Last().Rejected;
     public PredictionList<Prediction> PreReview => Predictions.Where(pred => pred.Review == null);
@@ -20,6 +20,8 @@ public record Result
     public PredictionList<Prediction> ManualReview => Predictions.Where(reviewType: ReviewType.MANUAL);
     public PredictionList<Prediction> AdminReview => Predictions.Where(reviewType: ReviewType.ADMIN);
     public PredictionList<Prediction> Final => Predictions.Where(pred => pred.Review == (Reviews.Any() ? Reviews.Last() : null));
+
+    public int CompareTo(Result other) => this.SubmissionId.CompareTo(other.SubmissionId);
 
     // Create a `Result` from the root object of a result file.
     public static Result FromJson(JObject json)
@@ -44,17 +46,17 @@ public record Result
 
         var documents = submissionResults.Select(Document.FromJson)
             .Concat(erroredFiles.PropertyValues().Select(Document.FromErroredFileJson))
-            .OrderBy(document => document.Id)
+            .Order()
             .ToList();
         var models = modelgroupMetadata.PropertyValues()
             .Concat(staticModelComponents)
             .Select(Model.FromJson)
-            .OrderBy(model => model.Id)
+            .Order()
             .ToList();
         var reviews = reviewMetadata
             .PropertyValues()
             .Select(Review.FromJson)
-            .OrderBy(review => review.Id)
+            .Order()
             .ToList();
 
         var predictions = new PredictionList<Prediction>();
