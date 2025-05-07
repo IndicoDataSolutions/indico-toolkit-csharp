@@ -22,9 +22,9 @@ public abstract record Prediction
     // Create a `Prediction` subtype appropriate for `model.Type` from a prediction JSON.
     public static Prediction FromJson(Document document, Model model, Review? review, JToken json)
     {
-        if (model.Type == ModelType.CLASSIFICATION)
+        if (model.Type == ModelType.CLASSIFICATION || model.Type == ModelType.GENAI_CLASSIFICATION)
             return Classification.FromJson(document, model, review, json);
-        else if (model.Type == ModelType.DOCUMENT_EXTRACTION)
+        else if (model.Type == ModelType.DOCUMENT_EXTRACTION || model.Type == ModelType.GENAI_EXTRACTION)
             return DocumentExtraction.FromJson(document, model, review, json);
         else if (model.Type == ModelType.FORM_EXTRACTION)
             return FormExtraction.FromJson(document, model, review, json);
