@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public class DocumentExtraction : Extraction
+public record DocumentExtraction : Extraction
 {
     public HashSet<Group> Groups { get; set; }
     public List<Span> Spans { get; set; }
@@ -19,7 +19,7 @@ public class DocumentExtraction : Extraction
     // Create an `DocumentExtraction` from a prediction object.
     public static new DocumentExtraction FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
-        return new DocumentExtraction
+        return new()
         {
             Document = document,
             Model = model,

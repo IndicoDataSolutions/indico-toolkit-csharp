@@ -3,12 +3,12 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public class Classification : Prediction
+public record Classification : Prediction
 {
     // Create a `Classification` from a prediction JSON.
     public static new Classification FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
-        return new Classification
+        return new()
         {
             Document = document,
             Model = model,

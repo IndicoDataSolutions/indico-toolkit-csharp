@@ -1,12 +1,10 @@
 namespace IndicoToolkit.Results;
 
 
-public abstract class Extraction : Prediction
+public abstract record Extraction : Prediction
 {
     public string Text { get; set; }
-    [NoPrint]
     public bool Accepted { get; protected set; }
-    [NoPrint]
     public bool Rejected { get; protected set; }
 
     public abstract int Page { get; }

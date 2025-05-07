@@ -1,5 +1,4 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
@@ -16,12 +15,13 @@ public enum ModelGroupType
 }
 
 
-public class ModelGroup : PrettyPrint
+public record ModelGroup
+(
+    int Id,
+    string Name,
+    ModelGroupType Type
+)
 {
-    public int Id { get; init; }
-    public string Name { get; init; }
-    public ModelGroupType Type { get; init; }
-
     // Determine the task type of a model from its string representation.
     public static ModelGroupType ModelGroupTypeFromString(string taskType)
     {
@@ -46,11 +46,11 @@ public class ModelGroup : PrettyPrint
     // Create a `ModelGroup` from a `modelgroup_metadata` list item.
     public static ModelGroup FromJson(JToken json)
     {
-        return new ModelGroup
-        {
-            Id = Utils.Get<int>(json, "id"),
-            Name = Utils.Get<string>(json, "name"),
-            Type = ModelGroupTypeFromString(Utils.Get<string>(json, "task_type")),
-        };
+        return new
+        (
+            Utils.Get<int>(json, "id"),
+            Utils.Get<string>(json, "name"),
+            ModelGroupTypeFromString(Utils.Get<string>(json, "task_type"))
+        );
     }
 }

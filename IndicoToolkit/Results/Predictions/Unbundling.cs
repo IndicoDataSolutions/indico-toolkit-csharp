@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 namespace IndicoToolkit.Results;
 
 
-public class Unbundling : Prediction
+public record Unbundling : Prediction
 {
     public List<Span> Spans { get; set; }
 
@@ -13,7 +13,7 @@ public class Unbundling : Prediction
     // Create an `Unbundling` from a prediction JSON.
     public static new Unbundling FromJson(Document document, ModelGroup model, Review? review, JToken json)
     {
-        return new Unbundling
+        return new()
         {
             Document = document,
             Model = model,

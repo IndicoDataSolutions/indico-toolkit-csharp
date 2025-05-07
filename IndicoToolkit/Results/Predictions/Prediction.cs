@@ -3,17 +3,15 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public abstract class Prediction : PrettyPrint
+public abstract record Prediction
 {
-    public Document Document { get; init; }
-    public ModelGroup Model { get; init; }
-    public Review? Review { get; init; }  // Pre-review predictions do not have an associated Review.
+    public Document Document { get; set; }
+    public ModelGroup Model { get; set; }
+    public Review? Review { get; set; }  // Pre-review predictions do not have an associated Review.
 
     public string Label { get; set; }
-    [NoPrint]
-    public Dictionary<string, double> Confidences { get; init; }
-    [NoPrint]
-    public JObject Extras { get; init; }
+    public Dictionary<string, double> Confidences { get; set; }
+    public JObject Extras { get; set; }
 
     public double Confidence
     {

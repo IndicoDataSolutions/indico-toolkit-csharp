@@ -1,33 +1,24 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace IndicoToolkit.Results;
 
 
-public class Result : PrettyPrint
+public record Result
+(
+    int Version,
+    int SubmissionId,
+    List<Document> Documents,
+    List<ModelGroup> Models,
+    PredictionList<Prediction> Predictions,
+    List<Review> Reviews
+)
 {
-    public int Version { get; init; }
-    public int SubmissionId { get; init; }
-    public List<Document> Documents { get; init; }
-    public List<ModelGroup> Models { get; init; }
-    public PredictionList<Prediction> Predictions { get; init; }
-    public List<Review> Reviews { get; init; }
-
-    [NoPrint]
     public bool Rejected => Reviews.Any() && Reviews.Last().Rejected;
-    [NoPrint]
     public PredictionList<Prediction> PreReview => Predictions.Where(pred => pred.Review == null);
-    [NoPrint]
     public PredictionList<Prediction> AutoReview => Predictions.Where(reviewType: ReviewType.AUTO);
-    [NoPrint]
     public PredictionList<Prediction> ManualReview => Predictions.Where(reviewType: ReviewType.MANUAL);
-    [NoPrint]
     public PredictionList<Prediction> AdminReview => Predictions.Where(reviewType: ReviewType.ADMIN);
-    [NoPrint]
     public PredictionList<Prediction> Final => Predictions.Where(pred => pred.Review == (Reviews.Any() ? Reviews.Last() : null));
 
     // Create a `Result` from the root object of a result file.
@@ -41,20 +32,18 @@ public class Result : PrettyPrint
         NormalizeJson(json);
 
         var submissionId = Utils.Get<int>(json, "submission_id");
-        var documents = new PrettyPrintList<Document>();
-        var models = new PrettyPrintList<ModelGroup>(
-            Utils.Get<JObject>(json, "modelgroup_metadata")
-                .PropertyValues()
-                .Select(value => ModelGroup.FromJson(value))
-                .OrderBy(model => model.Id)
-        );
+        var documents = new List<Document>();
+        var models = Utils.Get<JObject>(json, "modelgroup_metadata")
+            .PropertyValues()
+            .Select(value => ModelGroup.FromJson(value))
+            .OrderBy(model => model.Id)
+            .ToList();
         var predictions = new PredictionList<Prediction>();
-        var reviews = new PrettyPrintList<Review>(
-            Utils.Get<JObject>(json, "reviews")
-                .PropertyValues()
-                .Select(value => Review.FromJson(value))
-                .OrderBy(review => review.Id)
-        );
+        var reviews = Utils.Get<JObject>(json, "reviews")
+            .PropertyValues()
+            .Select(value => Review.FromJson(value))
+            .OrderBy(review => review.Id)
+            .ToList();
 
         foreach (var documentJson in Utils.Get<JArray>(json, "submission_results"))
         {
@@ -104,15 +93,15 @@ public class Result : PrettyPrint
 
         documents.Sort((left, right) => left.Id.CompareTo(right.Id));
 
-        return new Result
-        {
-            Version = version,
-            SubmissionId = submissionId,
-            Documents = documents,
-            Models = models,
-            Predictions = predictions,
-            Reviews = reviews,
-        };
+        return new
+        (
+            version,
+            submissionId,
+            documents,
+            models,
+            predictions,
+            reviews
+        );
     }
 
     // Fix inconsistencies observed in result files.

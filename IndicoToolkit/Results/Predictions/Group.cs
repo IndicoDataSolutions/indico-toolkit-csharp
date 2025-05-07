@@ -3,29 +3,30 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public class Group : PrettyPrint
+public record Group
+(
+    int Id,
+    string Name,
+    int Index
+)
 {
-    public int Id { get; init; }
-    public string Name { get; init; }
-    public int Index { get; init; }
-
     public static Group FromJson(JToken json)
     {
         var idAndName = Utils.Get<string>(json, "group_id");
         var idString = idAndName.Split(":").First();
         var id = int.Parse(idString);
 
-        return new Group
-        {
-            Id = id,
-            Name = Utils.Get<string>(json, "group_name"),
-            Index = Utils.Get<int>(json, "group_index"),
-        };
+        return new
+        (
+            id,
+            Utils.Get<string>(json, "group_name"),
+            Utils.Get<int>(json, "group_index")
+        );
     }
 
     public JObject ToJson()
     {
-        return new JObject
+        return new()
         {
             ["group_id"] = $"{Id}:{Name}",
             ["group_name"] = Name,

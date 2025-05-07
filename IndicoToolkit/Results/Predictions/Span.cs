@@ -3,25 +3,26 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public class Span : PrettyPrint
+public record Span
+(
+    int Page,
+    int Start,
+    int End
+)
 {
-    public int Page { get; init; }
-    public int Start { get; init; }
-    public int End { get; init; }
-
     public static Span FromJson(JToken json)
     {
-        return new Span
-        {
-            Page = Utils.Get<int>(json, "page_num"),
-            Start = Utils.Get<int>(json, "start"),
-            End = Utils.Get<int>(json, "end"),
-        };
+        return new
+        (
+            Utils.Get<int>(json, "page_num"),
+            Utils.Get<int>(json, "start"),
+            Utils.Get<int>(json, "end")
+        );
     }
 
     public JObject ToJson()
     {
-        return new JObject
+        return new()
         {
             ["page_num"] = Page,
             ["start"] = Start,

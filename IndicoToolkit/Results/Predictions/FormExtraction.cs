@@ -11,7 +11,7 @@ public enum FormExtractionType
 }
 
 
-public class FormExtraction : Extraction
+public record FormExtraction : Extraction
 {
     public FormExtractionType Type { get; set; }
     public Box Box { get; set; }
@@ -38,7 +38,7 @@ public class FormExtraction : Extraction
     {
         var structured = Utils.Get<JObject>(json, "normalized", "structured");
 
-        return new FormExtraction
+        return new()
         {
             Document = document,
             Model = model,

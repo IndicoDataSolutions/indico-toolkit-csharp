@@ -1,22 +1,14 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace IndicoToolkit.Results;
 
 
-public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> where PredictionType : Prediction
+public class PredictionList<PredictionType> : List<PredictionType> where PredictionType : Prediction
 {
-    [NoPrint]
     public PredictionList<Classification> Classifications => OfType<Classification>();
-    [NoPrint]
     public PredictionList<DocumentExtraction> DocumentExtractions => OfType<DocumentExtraction>();
-    [NoPrint]
     public PredictionList<Extraction> Extractions => OfType<Extraction>();
-    [NoPrint]
     public PredictionList<FormExtraction> FormExtractions => OfType<FormExtraction>();
-    [NoPrint]
     public PredictionList<Unbundling> Unbundlings => OfType<Unbundling>();
 
     public PredictionList() : base() { }
@@ -225,5 +217,11 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
         }
 
         return changes;
+    }
+
+    public override string ToString()
+    {
+        var items = this.Select(item => $"    {item?.ToString()?.Replace("\n", "\n    ") ?? "null"}");
+        return $"{GetType().Name} {{\n{string.Join(",\n", items)}\n}}";
     }
 }
