@@ -35,4 +35,11 @@ public record Box
             ["bottom"] = Bottom,
         };
     }
+
+    // It's more ergonomic to represent the lack of a bounding box with a special null
+    // box object rather than using `null` or raising an error. This lets you e.g. sort
+    // by the `box` attribute without having to constantly check for `null`, while
+    // still allowing you do a "null check" with `Extraction.Box.IsNull`.
+    public static readonly Box NULL_BOX = new(0, 0, 0, 0, 0);
+    public bool IsNull => this == NULL_BOX;
 }

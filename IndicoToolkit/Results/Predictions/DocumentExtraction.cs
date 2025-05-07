@@ -10,7 +10,7 @@ public record DocumentExtraction : Extraction
 
     public Span Span
     {
-        get => Spans.First();
+        get => Spans.FirstOrDefault(Span.NULL_SPAN);
         set => Spans = new List<Span> { value };
     }
 
