@@ -5,56 +5,91 @@ namespace IndicoToolkit.Results;
 
 public static class Utils
 {
-    // Return the value obtained by traversing `json` using `keys` as indices if that
-    // value has type `ValueType`. Throw a `ResultException` otherwise.
+    // Return the value of type `ValueType` obtained by traversing `json` using `keys`.
+    // Throw `ResultException` if a key doesn't exist or the value has the wrong type.
     public static ValueType Get<ValueType>(JToken? json, params object[] keys)
     {
         foreach (var key in keys)
         {
-            if (key is string strKey && json?.Type == JTokenType.Object)
-                json = json[key];
-            else if (key is int intKey && json?.Type == JTokenType.Array)
-                json = json[key];
+            if (json is JObject jsonObject)
+            {
+                if (key is string keyString && jsonObject.ContainsKey(keyString))
+                {
+                    json = jsonObject[keyString];
+                }
+                else
+                {
+                    var properties = jsonObject.Properties().Select(property => property.Name);
+                    throw new ResultException(
+                        $"key '{key}' not in object ('{string.Join("', '", properties)}')"
+                    );
+                }
+            }
+            else if (json is JArray jsonArray)
+            {
+                if (key is int keyInteger)
+                {
+                    if (0 <= keyInteger && keyInteger < jsonArray.Count)
+                        json = jsonArray[keyInteger];
+                    else
+                        throw new ResultException(
+                            $"index {keyInteger} out of range [0,{jsonArray.Count})"
+                        );
+                }
+                else
+                {
+                    throw new ResultException($"array can't be indexed with `{key}`");
+                }
+            }
             else
-                throw new ResultException(
-                    $"JSON object `{json}` does not contain key `{key}`"
-                );
-        }
-
-        if (json == null || json.Type == JTokenType.Null)
-        {
-            var type = typeof(ValueType);
-            var isNullableValueType = Nullable.GetUnderlyingType(type) != null;
-
-            if (isNullableValueType)
-                return default;
-            else
-                throw new ResultException(
-                    $"value `{json}` for key `{keys.Last()}` is not of type `{typeof(ValueType)}`"
-                );
+            {
+                throw new ResultException($"{json?.GetType()} can't be traversed");
+            }
         }
 
         try
         {
-            return json.ToObject<ValueType>();
+            var value = json.ToObject<ValueType>();
+
+            if (value == null)
+                throw new ResultException("value is null");
+
+            return value;
         }
-        catch (System.Exception)
+        catch
         {
             throw new ResultException(
-                $"value `{json}` for key `{keys.Last()}` is not of type `{typeof(ValueType)}`"
+                $"value `{json}` doesn't have type {typeof(ValueType)}"
             );
         }
     }
 
-    // Determine if `json` can be traversed using `keys` to a value of type `ValueType`.
+    // Check if `json` can be traversed using `keys` to a value of type `ValueType`.
     public static bool Has<ValueType>(JToken? json, params object[] keys)
     {
+        foreach (var key in keys)
+        {
+            if (
+                json is JObject jsonObject
+                && key is string keyString
+                && jsonObject.ContainsKey(keyString)
+            )
+                json = jsonObject[keyString];
+            else if (
+                json is JArray jsonArray
+                && key is int keyInteger
+                && 0 <= keyInteger && keyInteger < jsonArray.Count
+            )
+                json = jsonArray[keyInteger];
+            else
+                return false;
+        }
+
         try
         {
-            Get<ValueType>(json, keys);
-            return true;
+            return json.ToObject<ValueType>() != null;
         }
-        catch (System.Exception)
+        catch
         {
             return false;
         }
