@@ -48,17 +48,14 @@ public record Document
     // Create a `Document` from an `errored_files` list item.
     public static Document FromErroredFileJson(JToken json)
     {
-        var traceback = Utils.Get<string>(json, "error");
-        var error = traceback.Split("\n").Last().Trim();
-
         return new
         (
             Utils.Get<int>(json, "submissionfile_id"),
             Utils.Get<string>(json, "input_filename"),
             "",
             true,
-            error,
-            traceback,
+            Utils.Get<string>(json, "error"),
+            Utils.Get<string>(json, "traceback"),
             ImmutableHashSet<string>.Empty,
             ImmutableHashSet<string>.Empty
         );

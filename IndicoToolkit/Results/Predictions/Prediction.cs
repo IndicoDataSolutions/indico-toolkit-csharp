@@ -22,6 +22,8 @@ public abstract record Prediction
     // Create a `Prediction` subtype appropriate for `model.Type` from a prediction JSON.
     public static Prediction FromJson(Document document, Model model, Review? review, JToken json)
     {
+        Normalization.NormalizePredictionJson(model.Type, json);
+
         if (model.Type == ModelType.CLASSIFICATION || model.Type == ModelType.GENAI_CLASSIFICATION)
             return Classification.FromJson(document, model, review, json);
         else if (model.Type == ModelType.DOCUMENT_EXTRACTION || model.Type == ModelType.GENAI_EXTRACTION)
