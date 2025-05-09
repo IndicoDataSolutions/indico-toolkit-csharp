@@ -36,8 +36,6 @@ public record FormExtraction : Extraction
     // Create a `FormExtraction` from a prediction JSON.
     public static new FormExtraction FromJson(Document document, Model model, Review? review, JToken json)
     {
-        var structured = Utils.Get<JObject>(json, "normalized", "structured");
-
         return new()
         {
             Document = document,
@@ -50,8 +48,14 @@ public record FormExtraction : Extraction
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
             Type = FormExtractionTypeFromString(Utils.Get<string>(json, "type")),
             Box = Box.FromJson(json),
-            Checked = Utils.Has<bool>(structured, "checked") && Utils.Get<bool>(structured, "checked"),
-            Signed = Utils.Has<bool>(structured, "signed") && Utils.Get<bool>(structured, "signed"),
+            Checked = (
+                Utils.Has<bool>(json, "normalized", "structured", "checked")
+                && Utils.Get<bool>(json, "normalized", "structured", "checked")
+            ),
+            Signed = (
+                Utils.Has<bool>(json, "normalized", "structured", "signed")
+                && Utils.Get<bool>(json, "normalized", "structured", "signed")
+            ),
             Extras = json as JObject,
         };
     }
