@@ -21,7 +21,7 @@ public static class Utils
                 {
                     var properties = jsonObject.Properties().Select(property => property.Name);
                     throw new ResultException(
-                        $"key '{key}' not in object ('{string.Join("', '", properties)}')"
+                        $"key '{key}' not in object keys ('{string.Join("', '", properties)}')"
                     );
                 }
             }
@@ -49,8 +49,16 @@ public static class Utils
 
         try
         {
-            var value = json.ToObject<ValueType>();
+            ValueType value;
 
+            // Return a reference to JSON types so they can be modified in-place.
+            if (typeof(JToken).IsAssignableFrom(typeof(ValueType)))
+                value = (ValueType)(object)json;
+            // Parse a scalar value (string, int, bool, etc) otherwise.
+            else
+                value = json.ToObject<ValueType>();
+
+            // Guarantee the returned value isn't null.
             if (value == null)
                 throw new ResultException("value is null");
 
