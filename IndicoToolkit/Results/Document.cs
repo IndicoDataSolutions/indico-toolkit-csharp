@@ -16,10 +16,10 @@ public record Document
     // present in the original result file. This may not be possible from the
     // predictions alone--if a model or component had an empty section because it didn't
     // produce predictions or if all of the predictions for that section were dropped.
-    // As such, the models and components seen when parsing a result file are tracked
+    // As such, the model and component IDs seen when parsing a result file are tracked
     // per-document so that the empty sections can be reproduced later.
-    ImmutableHashSet<string> ModelSections,
-    ImmutableHashSet<string> ComponentSections
+    ImmutableHashSet<string> ModelIds,
+    ImmutableHashSet<string> ComponentIds
 ) : IComparable<Document>
 {
     public int CompareTo(Document other) => this.Id.CompareTo(other.Id);

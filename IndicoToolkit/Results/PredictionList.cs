@@ -202,17 +202,17 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
                     modelPair.Value.Select(prediction => prediction.ToJson())
                 );
 
-                if (document.ModelSections.Contains(id))
+                if (document.ModelIds.Contains(id))
                     modelResults[id] = predictions;
                 else
                     componentResults[id] = predictions;
             }
 
-            foreach (var modelId in document.ModelSections)
+            foreach (var modelId in document.ModelIds)
                 if (!modelResults.ContainsKey(modelId))
                     modelResults[modelId] = new JArray();
 
-            foreach (var componentId in document.ComponentSections)
+            foreach (var componentId in document.ComponentIds)
                 if (!modelResults.ContainsKey(componentId))
                     componentResults[componentId] = new JArray();
 
