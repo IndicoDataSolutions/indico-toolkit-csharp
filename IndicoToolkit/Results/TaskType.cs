@@ -1,0 +1,13 @@
+namespace IndicoToolkit.Results;
+
+
+public enum TaskType
+{
+    CLASSIFICATION,
+    DOCUMENT_EXTRACTION,
+    FORM_EXTRACTION,
+    GENAI_CLASSIFICATION,
+    GENAI_EXTRACTION,
+    GENAI_SUMMARIZATION,
+    UNBUNDLING
+}

@@ -8,7 +8,7 @@ public record Result
     int Version,
     int SubmissionId,
     List<Document> Documents,
-    List<Model> Models,
+    List<Results.Tasks.Task> Tasks,
     PredictionList<Prediction> Predictions,
     List<Review> Reviews
 ) : IComparable<Result>
@@ -47,9 +47,9 @@ public record Result
             .Concat(erroredFiles.PropertyValues().Select(Document.FromErroredFileJson))
             .Order()
             .ToList();
-        var models = modelgroupMetadata.PropertyValues()
+        var tasks = modelgroupMetadata.PropertyValues()
             .Concat(staticModelComponents)
-            .Select(Model.FromJson)
+            .Select(Results.Tasks.Task.FromJson)
             .Order()
             .ToList();
         var reviews = reviewMetadata
@@ -70,14 +70,14 @@ public record Result
                 .Concat(Utils.Get<JObject>(componentResultsJson, "ORIGINAL").Properties());
 
             // Parse pre-review predictions (which don't have an associated review).
-            foreach (var modelJson in originalJson)
+            foreach (var taskJson in originalJson)
             {
-                var modelId = int.Parse(modelJson.Name);
-                var model = models.Where(model => model.Id == modelId).First();
+                var taskId = int.Parse(taskJson.Name);
+                var task = tasks.Where(task => task.Id == taskId).First();
 
-                foreach (var predictionJson in modelJson.Value as JArray)
+                foreach (var predictionJson in taskJson.Value as JArray)
                     predictions.Add(Prediction.FromJson(
-                        document, model, review: null, predictionJson
+                        document, task, review: null, predictionJson
                     ));
             }
 
@@ -88,14 +88,14 @@ public record Result
                 var finalJson = Utils.Get<JObject>(modelResultsJson, "FINAL").Properties()
                     .Concat(Utils.Get<JObject>(componentResultsJson, "FINAL").Properties());
 
-                foreach (var modelJson in finalJson)
+                foreach (var taskJson in finalJson)
                 {
-                    var modelId = int.Parse(modelJson.Name);
-                    var model = models.Where(model => model.Id == modelId).First();
+                    var taskId = int.Parse(taskJson.Name);
+                    var task = tasks.Where(task => task.Id == taskId).First();
 
-                    foreach (var predictionJson in modelJson.Value as JArray)
+                    foreach (var predictionJson in taskJson.Value as JArray)
                         predictions.Add(Prediction.FromJson(
-                            document, model, review, predictionJson
+                            document, task, review, predictionJson
                         ));
                 }
             }
@@ -106,7 +106,7 @@ public record Result
             version,
             submissionId,
             documents,
-            models,
+            tasks,
             predictions,
             reviews
         );

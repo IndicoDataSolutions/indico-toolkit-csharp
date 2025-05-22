@@ -61,7 +61,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     //
     // predicate: predictions for which this function returns True.
     // document: predictions from this document,
-    // model: predictions from this model,
+    // task: predictions from this task,
     // review: predictions from this review,
     // reviewType: predictions from this review type,
     // label: predictions with this label,
@@ -70,9 +70,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList<PredictionType> Where(
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
-        Model? model = null,
-        string? modelName = null,
-        ModelType? modelType = null,
+        Results.Tasks.Task? task = null,
+        string? taskName = null,
+        TaskType? taskType = null,
         Review? review = null,
         ReviewType? reviewType = null,
         string? label = null,
@@ -95,14 +95,14 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         if (document != null)
             predicates.Add(pred => pred.Document == document);
 
-        if (model != null)
-            predicates.Add(pred => pred.Model == model);
+        if (task != null)
+            predicates.Add(pred => pred.Task == task);
 
-        if (modelName != null)
-            predicates.Add(pred => pred.Model.Name == modelName);
+        if (taskName != null)
+            predicates.Add(pred => pred.Task.Name == taskName);
 
-        if (modelType != null)
-            predicates.Add(pred => pred.Model.Type == modelType);
+        if (taskType != null)
+            predicates.Add(pred => pred.Task.Type == taskType);
 
         if (review != null)
             predicates.Add(pred => pred.Review == review);
@@ -189,23 +189,23 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             var modelResults = new JObject();
             var componentResults = new JObject();
 
-            var predictionsByModel = this.Where(
+            var predictionsByTask = this.Where(
                 document: document
-            ).GroupBy<Model>(
-                prediction => prediction.Model
+            ).GroupBy<Results.Tasks.Task>(
+                prediction => prediction.Task
             );
 
-            foreach (var modelPair in predictionsByModel)
+            foreach (var taskItem in predictionsByTask)
             {
-                var id = modelPair.Key.Id.ToString();
+                var taskId = taskItem.Key.Id.ToString();
                 var predictions = new JArray(
-                    modelPair.Value.Select(prediction => prediction.ToJson())
+                    taskItem.Value.Select(prediction => prediction.ToJson())
                 );
 
-                if (document.ModelIds.Contains(id))
-                    modelResults[id] = predictions;
+                if (document.ModelIds.Contains(taskId))
+                    modelResults[taskId] = predictions;
                 else
-                    componentResults[id] = predictions;
+                    componentResults[taskId] = predictions;
             }
 
             foreach (var modelId in document.ModelIds)

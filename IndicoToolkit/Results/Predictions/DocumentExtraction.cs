@@ -17,12 +17,12 @@ public record DocumentExtraction : Extraction
     public override int Page => Span.Page;
 
     // Create an `DocumentExtraction` from a prediction object.
-    public static new DocumentExtraction FromJson(Document document, Model model, Review? review, JToken json)
+    public static new DocumentExtraction FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         return new()
         {
             Document = document,
-            Model = model,
+            Task = task,
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),

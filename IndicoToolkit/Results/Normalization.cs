@@ -38,7 +38,7 @@ public static class Normalization
         }
     }
 
-    public static void NormalizePredictionJson(ModelType modelType, JToken json)
+    public static void NormalizePredictionJson(TaskType taskType, JToken json)
     {
         // Predictions added in review lack a `confidence` section.
         if (!Utils.Has<JObject>(json, "confidence"))
@@ -49,9 +49,9 @@ public static class Normalization
         // Extractions added in review may lack a `normalized` section.
         if (
             (
-                modelType == ModelType.DOCUMENT_EXTRACTION
-                || modelType == ModelType.GENAI_EXTRACTION
-                || modelType == ModelType.FORM_EXTRACTION
+                taskType == TaskType.DOCUMENT_EXTRACTION
+                || taskType == TaskType.GENAI_EXTRACTION
+                || taskType == TaskType.FORM_EXTRACTION
             )
             && !Utils.Has<JObject>(json, "normalized")
         )
@@ -62,8 +62,8 @@ public static class Normalization
         // Document Extractions added in review may lack a `spans` section.
         if (
             (
-                modelType == ModelType.DOCUMENT_EXTRACTION
-                || modelType == ModelType.GENAI_EXTRACTION
+                taskType == TaskType.DOCUMENT_EXTRACTION
+                || taskType == TaskType.GENAI_EXTRACTION
             )
             && !Utils.Has<JArray>(json, "spans")
         )
@@ -74,7 +74,7 @@ public static class Normalization
         // Form Extractions added in review may lack bounding box information.
         // These values will match `Box.NULL_BOX`.
         if (
-            modelType == ModelType.FORM_EXTRACTION
+            taskType == TaskType.FORM_EXTRACTION
             && !Utils.Has<int>(json, "top")
         )
         {
@@ -89,8 +89,8 @@ public static class Normalization
         // lack a `groupings` section.
         if (
             (
-                modelType == ModelType.DOCUMENT_EXTRACTION
-                || modelType == ModelType.GENAI_EXTRACTION
+                taskType == TaskType.DOCUMENT_EXTRACTION
+                || taskType == TaskType.GENAI_EXTRACTION
             )
             && !Utils.Has<JArray>(json, "groupings")
         )

@@ -6,12 +6,12 @@ namespace IndicoToolkit.Results;
 public record Classification : Prediction
 {
     // Create a `Classification` from a prediction JSON.
-    public static new Classification FromJson(Document document, Model model, Review? review, JToken json)
+    public static new Classification FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         return new()
         {
             Document = document,
-            Model = model,
+            Task = task,
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
