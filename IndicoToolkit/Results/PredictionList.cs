@@ -59,14 +59,23 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     // Return a new prediction list containing predictions that match
     // all of the specified filters.
     //
-    // predicate: predictions for which this function returns True.
+    // predicate: predictions for which this function returns True,
     // document: predictions from this document,
     // task: predictions from this task,
+    // taskName: predictions with this task name,
+    // taskType: predictions with this task type,
     // review: predictions from this review,
     // reviewType: predictions from this review type,
     // label: predictions with this label,
-    // min_confidence: predictions with confidence >= this threshold,
-    // max_confidence: predictions with confidence <= this threshold,
+    // labelIn: predictions with any of these labels,
+    // minConfidence: predictions with confidence >= this threshold,
+    // maxConfidence: predictions with confidence <= this threshold,
+    // page: extractions on this page,
+    // pageIn: extractions on any of these pages,
+    // accepted: extractions that are accepted (or not),
+    // rejected: extractions that are rejected (or not),
+    // checked_: form extractions that are checked (or not),
+    // signed: form extractions that are signed (or not).
     public PredictionList<PredictionType> Where(
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
