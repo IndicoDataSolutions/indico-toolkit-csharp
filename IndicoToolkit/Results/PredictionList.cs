@@ -176,9 +176,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         return this;
     }
 
-    // Create a JObject or JArray for the `changes` argument of `SubmitReview` based on
-    // the predictions in this prediction list and the documents and version of `result`.
-    public dynamic ToChanges(Result result)
+    // Create a JArray for the `changes` argument of `Reviews().SubmitReviewAsync()`
+    // based on the predictions in this prediction list and the documents of `result`.
+    public JArray ToChanges(Result result)
     {
         var changes = new JArray();
 
