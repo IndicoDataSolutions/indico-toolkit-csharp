@@ -3,14 +3,6 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public enum FormExtractionType
-{
-    CHECKBOX,
-    SIGNATURE,
-    TEXT
-}
-
-
 public record FormExtraction : Extraction
 {
     public FormExtractionType Type { get; set; }

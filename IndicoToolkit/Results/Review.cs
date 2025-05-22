@@ -3,14 +3,6 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public enum ReviewType
-{
-    ADMIN,
-    AUTO,
-    MANUAL
-}
-
-
 public record Review
 (
     int Id,
