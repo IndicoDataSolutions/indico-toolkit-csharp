@@ -213,7 +213,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
                     modelResults[modelId] = new JArray();
 
             foreach (var componentId in document.ComponentIds)
-                if (!modelResults.ContainsKey(componentId))
+                if (!componentResults.ContainsKey(componentId))
                     componentResults[componentId] = new JArray();
 
             changes.Add(
