@@ -11,7 +11,7 @@ public record DocumentExtraction : Extraction
     public Span Span
     {
         get => Spans.FirstOrDefault(Span.NULL_SPAN);
-        set => Spans = new List<Span> { value };
+        set => Spans = value.IsNull ? new List<Span>() : new List<Span> { value };
     }
 
     public override int Page => Span.Page;

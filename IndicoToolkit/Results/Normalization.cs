@@ -43,7 +43,7 @@ public static class Normalization
         // Predictions added in review lack a `confidence` section.
         if (!Utils.Has<JObject>(json, "confidence"))
         {
-            json["confidence"] = new JObject { [Utils.Get<string>(json, "label")] = 0 };
+            json["confidence"] = new JObject { [Utils.Get<string>(json, "label")] = 1.0 };
         }
 
         // Extractions added in review may lack a `normalized` section.
@@ -60,6 +60,7 @@ public static class Normalization
         }
 
         // Document Extractions added in review may lack a `spans` section.
+        // This value will match `Span.NULL_SPAN`.
         if (
             (
                 taskType == TaskType.DOCUMENT_EXTRACTION

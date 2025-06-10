@@ -5,12 +5,11 @@ namespace IndicoToolkit.Results;
 
 public record Result
 (
-    int Version,
     int SubmissionId,
     List<Document> Documents,
     List<Results.Tasks.Task> Tasks,
-    PredictionList<Prediction> Predictions,
-    List<Review> Reviews
+    List<Review> Reviews,
+    PredictionList<Prediction> Predictions
 ) : IComparable<Result>
 {
     public bool Rejected => Reviews.Any() && Reviews.Last().Rejected;
@@ -25,10 +24,10 @@ public record Result
     // Create a `Result` from the root object of a result file.
     public static Result FromJson(JObject json)
     {
-        var version = Utils.Get<int>(json, "file_version");
+        var fileVersion = Utils.Get<int>(json, "file_version");
 
-        if (version != 3)
-            throw new ResultException($"unsupported file version `{version}`");
+        if (fileVersion != 3)
+            throw new ResultException($"unsupported file version `{fileVersion}`");
 
         Normalization.NormalizeResultJson(json);
 
@@ -60,7 +59,7 @@ public record Result
 
         var predictions = new PredictionList<Prediction>();
 
-        foreach (var documentJson in Utils.Get<JArray>(json, "submission_results"))
+        foreach (var documentJson in submissionResults)
         {
             var documentId = Utils.Get<int>(documentJson, "submissionfile_id");
             var document = documents.Where(document => document.Id == documentId).First();
@@ -69,7 +68,7 @@ public record Result
             var originalJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL").Properties()
                 .Concat(Utils.Get<JObject>(componentResultsJson, "ORIGINAL").Properties());
 
-            // Parse pre-review predictions (which don't have an associated review).
+            // Parse original predictions (which don't have an associated review).
             foreach (var taskJson in originalJson)
             {
                 var taskId = int.Parse(taskJson.Name);
@@ -103,12 +102,11 @@ public record Result
 
         return new
         (
-            version,
             submissionId,
             documents,
             tasks,
-            predictions,
-            reviews
+            reviews,
+            predictions
         );
     }
 }

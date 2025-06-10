@@ -26,19 +26,40 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     // Group predictions into a dictionary using `key`.
     public Dictionary<KeyType, PredictionList<PredictionType>> GroupBy<KeyType>(Func<PredictionType, KeyType> key)
     {
-        var grouped = new Dictionary<KeyType, PredictionList<PredictionType>>();
+        var groupedPredictions = new Dictionary<KeyType, PredictionList<PredictionType>>();
 
         foreach (var prediction in this)
         {
             KeyType groupKey = key(prediction);
 
-            if (!grouped.ContainsKey(groupKey))
-                grouped[groupKey] = new PredictionList<PredictionType>();
+            if (!groupedPredictions.ContainsKey(groupKey))
+                groupedPredictions[groupKey] = new PredictionList<PredictionType>();
 
-            grouped[groupKey].Add(prediction);
+            groupedPredictions[groupKey].Add(prediction);
         }
 
-        return grouped;
+        return groupedPredictions;
+    }
+
+    // Group predictions into a dictionary using `keys`.
+    // Each prediction is associated with every key in the iterable individually.
+    // If the iterable is empty, the prediction is not included in any group.
+    public Dictionary<KeyType, PredictionList<PredictionType>> GroupByIter<KeyType>(Func<PredictionType, IEnumerable<KeyType>> keys)
+    {
+        var groupedPredictions = new Dictionary<KeyType, PredictionList<PredictionType>>();
+
+        foreach (var prediction in this)
+        {
+            foreach (var groupKey in keys(prediction))
+            {
+                if (!groupedPredictions.ContainsKey(groupKey))
+                    groupedPredictions[groupKey] = new PredictionList<PredictionType>();
+
+                groupedPredictions[groupKey].Add(prediction);
+            }
+        }
+
+        return groupedPredictions;
     }
 
     // Return a new prediction list containing predictions of type `Subtype`.
@@ -61,17 +82,23 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     //
     // predicate: predictions for which this function returns True,
     // document: predictions from this document,
+    // documentIn: predictions from any of these documents,
     // task: predictions from this task,
+    // taskIn: predictions from any of these tasks,
     // taskName: predictions with this task name,
+    // taskNameIn: predictions with any of these task names,
     // taskType: predictions with this task type,
+    // taskTypeIn: predictions with any of these task types,
     // review: predictions from this review,
+    // reviewIn: predictions from any of these reviews,
     // reviewType: predictions from this review type,
+    // reviewTypeIn: predictions from any of these review types,
     // label: predictions with this label,
     // labelIn: predictions with any of these labels,
-    // minConfidence: predictions with confidence >= this threshold,
-    // maxConfidence: predictions with confidence <= this threshold,
     // page: extractions on this page,
     // pageIn: extractions on any of these pages,
+    // minConfidence: predictions with confidence >= this threshold,
+    // maxConfidence: predictions with confidence <= this threshold,
     // accepted: extractions that are accepted (or not),
     // rejected: extractions that are rejected (or not),
     // checked_: form extractions that are checked (or not),
@@ -79,17 +106,23 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList<PredictionType> Where(
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
+        ICollection<Document>? documentIn = null,
         Results.Tasks.Task? task = null,
+        ICollection<Results.Tasks.Task>? taskIn = null,
         string? taskName = null,
+        ICollection<string>? taskNameIn = null,
         TaskType? taskType = null,
+        ICollection<TaskType>? taskTypeIn = null,
         Review? review = null,
+        ICollection<Review>? reviewIn = null,
         ReviewType? reviewType = null,
+        ICollection<ReviewType>? reviewTypeIn = null,
         string? label = null,
         ICollection<string>? labelIn = null,
-        double? minConfidence = null,
-        double? maxConfidence = null,
         int? page = null,
         ICollection<int>? pageIn = null,
+        double? minConfidence = null,
+        double? maxConfidence = null,
         bool? accepted = null,
         bool? rejected = null,
         bool? checked_ = null,
@@ -104,20 +137,38 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         if (document != null)
             predicates.Add(pred => pred.Document == document);
 
+        if (documentIn != null)
+            predicates.Add(pred => documentIn.Contains(pred.Document));
+
         if (task != null)
             predicates.Add(pred => pred.Task == task);
+
+        if (taskIn != null)
+            predicates.Add(pred => taskIn.Contains(pred.Task));
 
         if (taskName != null)
             predicates.Add(pred => pred.Task.Name == taskName);
 
+        if (taskNameIn != null)
+            predicates.Add(pred => taskNameIn.Contains(pred.Task.Name));
+
         if (taskType != null)
             predicates.Add(pred => pred.Task.Type == taskType);
+
+        if (taskTypeIn != null)
+            predicates.Add(pred => taskTypeIn.Contains(pred.Task.Type));
 
         if (review != null)
             predicates.Add(pred => pred.Review == review);
 
+        if (reviewIn != null)
+            predicates.Add(pred => reviewIn.Contains(pred.Review));
+
         if (reviewType != null)
             predicates.Add(pred => pred.Review != null && pred.Review.Type == reviewType);
+
+        if (reviewTypeIn != null)
+            predicates.Add(pred => pred.Review != null && reviewTypeIn.Contains(pred.Review.Type));
 
         if (label != null)
             predicates.Add(pred => pred.Label == label);
@@ -125,17 +176,17 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         if (labelIn != null)
             predicates.Add(pred => labelIn.Contains(pred.Label));
 
-        if (minConfidence != null)
-            predicates.Add(pred => pred.Confidence >= minConfidence);
-
-        if (maxConfidence != null)
-            predicates.Add(pred => pred.Confidence <= maxConfidence);
-
         if (page != null)
             predicates.Add(pred => pred is Extraction && (pred as Extraction).Page == page);
 
         if (pageIn != null)
             predicates.Add(pred => pred is Extraction && pageIn.Contains((pred as Extraction).Page));
+
+        if (minConfidence != null)
+            predicates.Add(pred => pred.Confidence >= minConfidence);
+
+        if (maxConfidence != null)
+            predicates.Add(pred => pred.Confidence <= maxConfidence);
 
         if (accepted != null)
             predicates.Add(pred => pred is Extraction && (pred as Extraction).Accepted == accepted);
@@ -213,7 +264,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
                 if (document.ModelIds.Contains(taskId))
                     modelResults[taskId] = predictions;
-                else
+                else if (document.ComponentIds.Contains(taskId))
                     componentResults[taskId] = predictions;
             }
 
