@@ -98,5 +98,15 @@ public static class Normalization
         {
             json["groupings"] = new JArray();
         }
+
+        // Summarizations added in review may lack a `citations` section.
+        // This value will match `Citation.NULL_CITATION`.
+        if (
+            taskType == TaskType.GENAI_SUMMARIZATION
+            && !Utils.Has<JArray>(json, "citations")
+        )
+        {
+            json["citations"] = new JArray();
+        }
     }
 }

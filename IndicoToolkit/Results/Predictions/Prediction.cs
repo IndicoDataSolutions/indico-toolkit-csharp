@@ -30,6 +30,8 @@ public abstract record Prediction
             return DocumentExtraction.FromJson(document, task, review, json);
         else if (task.Type == TaskType.FORM_EXTRACTION)
             return FormExtraction.FromJson(document, task, review, json);
+        else if (task.Type == TaskType.GENAI_SUMMARIZATION)
+            return Summarization.FromJson(document, task, review, json);
         else if (task.Type == TaskType.UNBUNDLING)
             return Unbundling.FromJson(document, task, review, json);
         else
