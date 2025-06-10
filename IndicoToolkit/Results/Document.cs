@@ -1,54 +1,63 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace IndicoToolkit.Results;
 
 
-public class Document : PrettyPrint
+public record Document
+(
+    int Id,
+    string Name,
+    string EtlOutputUri,
+    bool Failed,
+    string Error,
+    string Traceback,
+    // Auto review changes must reproduce all model and component sections that were
+    // present in the original result file. This may not be possible from the
+    // predictions alone--if a model or component had an empty section because it didn't
+    // produce predictions or if all of the predictions for that section were dropped.
+    // As such, the model and component IDs seen when parsing a result file are tracked
+    // per-document so that the empty sections can be reproduced later.
+    ImmutableHashSet<string> ModelIds,
+    ImmutableHashSet<string> ComponentIds
+) : IComparable<Document>
 {
-    public int? Id { get; init; }  // v1 result files don't include Document IDs.
-    public string? Name { get; init; }  // v1 result files don't include Document Names.
-    public string EtlOutputUrl { get; init; }
-    public string FullTextUrl { get; init; }
+    public int CompareTo(Document other) => this.Id.CompareTo(other.Id);
 
-    // Auto review changes must reproduce all model sections that were present in the
-    // original result file. This may not be possible from the predictions alone--if a
-    // model had an empty section because it didn't produce predictions or if all of
-    // the predictions were removed to reject them. As such, the models seen when
-    // parsing result files are tracked per-document so that the empty sections can be
-    // reproduced later.
-    [NoPrint]
-    public HashSet<string> ModelSections { get; init; }
-
-    // Create a Document from the root structure of a v1 result file.
-    public static Document FromV1Json(JToken json)
+    // Create a `Document` from a `submission_results` list item.
+    public static Document FromJson(JToken json)
     {
-        var etlOutputUrl = Utils.Get<string>(json, "etl_output");
-        var fullTextUrl = etlOutputUrl.Replace("etl_output.json", "full_text.txt");
+        var modelResults = Utils.Get<JObject>(json, "model_results", "ORIGINAL");
+        var componentResults = Utils.Get<JObject>(json, "component_results", "ORIGINAL");
+        var modelIds = modelResults.Properties().Select(p => p.Name);
+        var componentIds = componentResults.Properties().Select(p => p.Name);
 
-        return new Document
-        {
-            Id = null,
-            Name = null,
-            EtlOutputUrl = etlOutputUrl,
-            FullTextUrl = fullTextUrl,
-            ModelSections = new HashSet<string>(),
-        };
+        return new
+        (
+            Utils.Get<int>(json, "submissionfile_id"),
+            Utils.Get<string>(json, "input_filename"),
+            Utils.Get<string>(json, "etl_output"),
+            false,
+            "",
+            "",
+            modelIds.ToImmutableHashSet(),
+            componentIds.ToImmutableHashSet()
+        );
     }
 
-    // Create a Document from a v3 `submission_results` list item.
-    public static Document FromV3Json(JToken json)
+    // Create a `Document` from an `errored_files` list item.
+    public static Document FromErroredFileJson(JToken json)
     {
-        var etlOutputUrl = Utils.Get<string>(json, "etl_output");
-        var fullTextUrl = etlOutputUrl.Replace("etl_output.json", "full_text.txt");
-
-        return new Document
-        {
-            Id = Utils.Get<int>(json, "submissionfile_id"),
-            Name = Utils.Get<string>(json, "input_filename"),
-            EtlOutputUrl = etlOutputUrl,
-            FullTextUrl = fullTextUrl,
-            ModelSections = new HashSet<string>(),
-        };
+        return new
+        (
+            Utils.Get<int>(json, "submissionfile_id"),
+            Utils.Get<string>(json, "input_filename"),
+            "",
+            true,
+            Utils.Get<string>(json, "error"),
+            Utils.Get<string>(json, "traceback"),
+            ImmutableHashSet<string>.Empty,
+            ImmutableHashSet<string>.Empty
+        );
     }
 }

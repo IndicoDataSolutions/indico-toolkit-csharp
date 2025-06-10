@@ -16,12 +16,12 @@ public class ResultTests
     );
 
     [Theory]
-    [InlineData("2910_v1_unreviewed.json")]
-    [InlineData("2911_v1_accepted.json")]
-    [InlineData("2912_v1_rejected.json")]
-    [InlineData("2913_v3_unreviewed.json")]
-    [InlineData("2914_v3_accepted.json")]
-    [InlineData("2915_v3_rejected.json")]
+    [InlineData("classify_extract_accepted.json")]
+    [InlineData("classify_extract_rejected.json")]
+    [InlineData("classify_extract_static_models.json")]
+    [InlineData("classify_extract_unreviewed.json")]
+    [InlineData("classify_unbundle.json")]
+    [InlineData("genai_classify_extract_summarize.json")]
     public void TestSampleFiles(string filename)
     {
         var json = File.ReadAllText(Path.Combine(SamplesFolder, filename));

@@ -1,29 +1,38 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
 
-public class Group : PrettyPrint
+public record Group
+(
+    int Id,
+    string Name,
+    int Index
+) : IComparable<Group>
 {
-    public int Id { get; init; }
-    public string Name { get; init; }
-    public int Index { get; init; }
+    public int CompareTo(Group other) => this.Id == other.Id
+        ? this.Index.CompareTo(other.Index)
+        : this.Id.CompareTo(other.Id);
+
+    public Group Next() => this with { Index = Index + 1 };
 
     public static Group FromJson(JToken json)
     {
-        return new Group
-        {
-            Id = int.Parse(Utils.Get<string>(json, "group_id").Split(":")[0]),
-            Name = Utils.Get<string>(json, "group_name"),
-            Index = Utils.Get<int>(json, "group_index"),
-        };
+        var idAndName = Utils.Get<string>(json, "group_id");
+        var idString = idAndName.Split(":").First();
+        var id = int.Parse(idString);
+
+        return new
+        (
+            id,
+            Utils.Get<string>(json, "group_name"),
+            Utils.Get<int>(json, "group_index")
+        );
     }
 
-    public virtual JObject ToJson()
+    public JObject ToJson()
     {
-        return new JObject
+        return new()
         {
             ["group_id"] = $"{Id}:{Name}",
             ["group_name"] = Name,

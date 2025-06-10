@@ -1,21 +1,17 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
 
-public class Prediction : PrettyPrint
+public abstract record Prediction
 {
-    public Document Document { get; init; }
-    public ModelGroup Model { get; init; }
-    public Review? Review { get; init; }  // Pre-review predictions do not have an associated Review.
+    public Document Document { get; set; }
+    public Results.Tasks.Task Task { get; set; }
+    public Review? Review { get; set; }  // Pre-review predictions do not have an associated Review.
 
     public string Label { get; set; }
-    [NoPrint]
-    public Dictionary<string, double> Confidences { get; init; }
-    [NoPrint]
-    public JObject Extras { get; init; }
+    public Dictionary<string, double> Confidences { get; set; }
+    public JObject Extras { get; set; }
 
     public double Confidence
     {
@@ -23,41 +19,25 @@ public class Prediction : PrettyPrint
         set => Confidences[Label] = value;
     }
 
-    // Create a Prediction subtype appropriate for `model.TaskType` from a prediction JSON.
-    public static Prediction FromV1Json(Document document, ModelGroup model, Review? review, JToken json)
+    // Create a `Prediction` subtype appropriate for `task.Type` from a prediction JSON.
+    public static Prediction FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
-        if (model.TaskType == TaskType.CLASSIFICATION)
-            return Classification.FromV1Json(document, model, review, json);
-        else if (model.TaskType == TaskType.DOCUMENT_EXTRACTION)
-            return DocumentExtraction.FromV1Json(document, model, review, json);
-        else if (model.TaskType == TaskType.FORM_EXTRACTION)
-            return FormExtraction.FromV1Json(document, model, review, json);
+        Normalization.NormalizePredictionJson(task.Type, json);
+
+        if (task.Type == TaskType.CLASSIFICATION || task.Type == TaskType.GENAI_CLASSIFICATION)
+            return Classification.FromJson(document, task, review, json);
+        else if (task.Type == TaskType.DOCUMENT_EXTRACTION || task.Type == TaskType.GENAI_EXTRACTION)
+            return DocumentExtraction.FromJson(document, task, review, json);
+        else if (task.Type == TaskType.FORM_EXTRACTION)
+            return FormExtraction.FromJson(document, task, review, json);
+        else if (task.Type == TaskType.GENAI_SUMMARIZATION)
+            return Summarization.FromJson(document, task, review, json);
+        else if (task.Type == TaskType.UNBUNDLING)
+            return Unbundling.FromJson(document, task, review, json);
         else
-            throw new ResultException($"unsupported v1 task type `{model.TaskType}`");
+            throw new ResultException($"unsupported task type `{task.Type}`");
     }
 
-    // Create a Prediction subtype appropriate for `model.TaskType` from a prediction JSON.
-    public static Prediction FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        if (model.TaskType == TaskType.CLASSIFICATION)
-            return Classification.FromV3Json(document, model, review, json);
-        else if (model.TaskType == TaskType.DOCUMENT_EXTRACTION)
-            return DocumentExtraction.FromV3Json(document, model, review, json);
-        else if (model.TaskType == TaskType.FORM_EXTRACTION)
-            return FormExtraction.FromV3Json(document, model, review, json);
-        else if (model.TaskType == TaskType.UNBUNDLING)
-            return Unbundling.FromV3Json(document, model, review, json);
-        else
-            throw new ResultException($"unsupported v3 task type `{model.TaskType}`");
-    }
-
-    public virtual JObject ToV1Json()
-    {
-        throw new NotImplementedException();
-    }
-
-    public virtual JObject ToV3Json()
-    {
-        throw new NotImplementedException();
-    }
+    // Create JSON for auto review changes.
+    public abstract JObject ToJson();
 }

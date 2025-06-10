@@ -1,18 +1,17 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
 
 namespace IndicoToolkit.Results;
 
 
-public class Classification : Prediction
+public record Classification : Prediction
 {
-    // Create a Classification from a prediction JSON.
-    public static Classification _FromJson(Document document, ModelGroup model, Review? review, JToken json)
+    // Create a `Classification` from a prediction JSON.
+    public static new Classification FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
-        return new Classification
+        return new()
         {
             Document = document,
-            Model = model,
+            Task = task,
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
@@ -20,32 +19,12 @@ public class Classification : Prediction
         };
     }
 
-    public static Classification FromV1Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        return _FromJson(document, model, review, json);
-    }
-
-    public static Classification FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
-    {
-        return _FromJson(document, model, review, json);
-    }
-
     // Create JSON for auto review changes.
-    public JObject _ToJson()
+    public override JObject ToJson()
     {
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
 
         return Extras;
-    }
-
-    public override JObject ToV1Json()
-    {
-        return _ToJson();
-    }
-
-    public override JObject ToV3Json()
-    {
-        return _ToJson();
     }
 }

@@ -1,36 +1,36 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
 
 namespace IndicoToolkit.Results;
 
 
-public class Unbundling : Prediction
+public record Unbundling : Prediction
 {
-    public List<int> Pages { get; set; }
+    public List<Span> Spans { get; set; }
 
-    // Create a Unbundling from a v3 prediction JSON.
-    public static Unbundling FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
+    public ImmutableList<int> Pages => Spans.Select(span => span.Page).ToImmutableList();
+
+    // Create an `Unbundling` from a prediction JSON.
+    public static new Unbundling FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
-        var spans = Utils.Get<JArray>(json, "spans");
-
-        return new Unbundling
+        return new()
         {
             Document = document,
-            Model = model,
+            Task = task,
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
-            Pages = spans.Select(span => Utils.Get<int>(span, "page_num")).ToList(),
+            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).ToList(),
             Extras = json as JObject,
         };
     }
 
-    public override JObject ToV3Json()
+    // Create JSON for auto review changes.
+    public override JObject ToJson()
     {
         Extras["label"] = Label;
         Extras["confidence"] = JObject.FromObject(Confidences);
-        Extras["spans"] = new JArray(Pages.Select(page => new JObject { ["page_num"] = page }));
+        Extras["spans"] = new JArray(Spans.Select(span => span.ToJson()));
 
         return Extras;
     }

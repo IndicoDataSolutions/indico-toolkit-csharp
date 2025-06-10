@@ -1,22 +1,14 @@
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace IndicoToolkit.Results;
 
 
-public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> where PredictionType : Prediction
+public class PredictionList<PredictionType> : List<PredictionType> where PredictionType : Prediction
 {
-    [NoPrint]
     public PredictionList<Classification> Classifications => OfType<Classification>();
-    [NoPrint]
     public PredictionList<DocumentExtraction> DocumentExtractions => OfType<DocumentExtraction>();
-    [NoPrint]
     public PredictionList<Extraction> Extractions => OfType<Extraction>();
-    [NoPrint]
     public PredictionList<FormExtraction> FormExtractions => OfType<FormExtraction>();
-    [NoPrint]
     public PredictionList<Unbundling> Unbundlings => OfType<Unbundling>();
 
     public PredictionList() : base() { }
@@ -34,19 +26,40 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
     // Group predictions into a dictionary using `key`.
     public Dictionary<KeyType, PredictionList<PredictionType>> GroupBy<KeyType>(Func<PredictionType, KeyType> key)
     {
-        var grouped = new Dictionary<KeyType, PredictionList<PredictionType>>();
+        var groupedPredictions = new Dictionary<KeyType, PredictionList<PredictionType>>();
 
         foreach (var prediction in this)
         {
             KeyType groupKey = key(prediction);
 
-            if (!grouped.ContainsKey(groupKey))
-                grouped[groupKey] = new PredictionList<PredictionType>();
+            if (!groupedPredictions.ContainsKey(groupKey))
+                groupedPredictions[groupKey] = new PredictionList<PredictionType>();
 
-            grouped[groupKey].Add(prediction);
+            groupedPredictions[groupKey].Add(prediction);
         }
 
-        return grouped;
+        return groupedPredictions;
+    }
+
+    // Group predictions into a dictionary using `keys`.
+    // Each prediction is associated with every key in the iterable individually.
+    // If the iterable is empty, the prediction is not included in any group.
+    public Dictionary<KeyType, PredictionList<PredictionType>> GroupByIter<KeyType>(Func<PredictionType, IEnumerable<KeyType>> keys)
+    {
+        var groupedPredictions = new Dictionary<KeyType, PredictionList<PredictionType>>();
+
+        foreach (var prediction in this)
+        {
+            foreach (var groupKey in keys(prediction))
+            {
+                if (!groupedPredictions.ContainsKey(groupKey))
+                    groupedPredictions[groupKey] = new PredictionList<PredictionType>();
+
+                groupedPredictions[groupKey].Add(prediction);
+            }
+        }
+
+        return groupedPredictions;
     }
 
     // Return a new prediction list containing predictions of type `Subtype`.
@@ -67,28 +80,49 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
     // Return a new prediction list containing predictions that match
     // all of the specified filters.
     //
-    // predicate: predictions for which this function returns True.
+    // predicate: predictions for which this function returns True,
     // document: predictions from this document,
-    // model: predictions from this model,
+    // documentIn: predictions from any of these documents,
+    // task: predictions from this task,
+    // taskIn: predictions from any of these tasks,
+    // taskName: predictions with this task name,
+    // taskNameIn: predictions with any of these task names,
+    // taskType: predictions with this task type,
+    // taskTypeIn: predictions with any of these task types,
     // review: predictions from this review,
+    // reviewIn: predictions from any of these reviews,
     // reviewType: predictions from this review type,
+    // reviewTypeIn: predictions from any of these review types,
     // label: predictions with this label,
-    // min_confidence: predictions with confidence >= this threshold,
-    // max_confidence: predictions with confidence <= this threshold,
+    // labelIn: predictions with any of these labels,
+    // page: extractions on this page,
+    // pageIn: extractions on any of these pages,
+    // minConfidence: predictions with confidence >= this threshold,
+    // maxConfidence: predictions with confidence <= this threshold,
+    // accepted: extractions that are accepted (or not),
+    // rejected: extractions that are rejected (or not),
+    // checked_: form extractions that are checked (or not),
+    // signed: form extractions that are signed (or not).
     public PredictionList<PredictionType> Where(
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
-        ModelGroup? model = null,
-        string? modelName = null,
-        TaskType? modelTaskType = null,
+        ICollection<Document>? documentIn = null,
+        Results.Tasks.Task? task = null,
+        ICollection<Results.Tasks.Task>? taskIn = null,
+        string? taskName = null,
+        ICollection<string>? taskNameIn = null,
+        TaskType? taskType = null,
+        ICollection<TaskType>? taskTypeIn = null,
         Review? review = null,
+        ICollection<Review>? reviewIn = null,
         ReviewType? reviewType = null,
+        ICollection<ReviewType>? reviewTypeIn = null,
         string? label = null,
         ICollection<string>? labelIn = null,
-        double? minConfidence = null,
-        double? maxConfidence = null,
         int? page = null,
         ICollection<int>? pageIn = null,
+        double? minConfidence = null,
+        double? maxConfidence = null,
         bool? accepted = null,
         bool? rejected = null,
         bool? checked_ = null,
@@ -103,20 +137,38 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
         if (document != null)
             predicates.Add(pred => pred.Document == document);
 
-        if (model != null)
-            predicates.Add(pred => pred.Model == model);
+        if (documentIn != null)
+            predicates.Add(pred => documentIn.Contains(pred.Document));
 
-        if (modelName != null)
-            predicates.Add(pred => pred.Model.Name == modelName);
+        if (task != null)
+            predicates.Add(pred => pred.Task == task);
 
-        if (modelTaskType != null)
-            predicates.Add(pred => pred.Model.TaskType == modelTaskType);
+        if (taskIn != null)
+            predicates.Add(pred => taskIn.Contains(pred.Task));
+
+        if (taskName != null)
+            predicates.Add(pred => pred.Task.Name == taskName);
+
+        if (taskNameIn != null)
+            predicates.Add(pred => taskNameIn.Contains(pred.Task.Name));
+
+        if (taskType != null)
+            predicates.Add(pred => pred.Task.Type == taskType);
+
+        if (taskTypeIn != null)
+            predicates.Add(pred => taskTypeIn.Contains(pred.Task.Type));
 
         if (review != null)
             predicates.Add(pred => pred.Review == review);
 
+        if (reviewIn != null)
+            predicates.Add(pred => reviewIn.Contains(pred.Review));
+
         if (reviewType != null)
             predicates.Add(pred => pred.Review != null && pred.Review.Type == reviewType);
+
+        if (reviewTypeIn != null)
+            predicates.Add(pred => pred.Review != null && reviewTypeIn.Contains(pred.Review.Type));
 
         if (label != null)
             predicates.Add(pred => pred.Label == label);
@@ -124,17 +176,17 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
         if (labelIn != null)
             predicates.Add(pred => labelIn.Contains(pred.Label));
 
-        if (minConfidence != null)
-            predicates.Add(pred => pred.Confidence >= minConfidence);
-
-        if (maxConfidence != null)
-            predicates.Add(pred => pred.Confidence <= maxConfidence);
-
         if (page != null)
             predicates.Add(pred => pred is Extraction && (pred as Extraction).Page == page);
 
         if (pageIn != null)
             predicates.Add(pred => pred is Extraction && pageIn.Contains((pred as Extraction).Page));
+
+        if (minConfidence != null)
+            predicates.Add(pred => pred.Confidence >= minConfidence);
+
+        if (maxConfidence != null)
+            predicates.Add(pred => pred.Confidence <= maxConfidence);
 
         if (accepted != null)
             predicates.Add(pred => pred is Extraction && (pred as Extraction).Accepted == accepted);
@@ -184,83 +236,62 @@ public class PredictionList<PredictionType> : PrettyPrintList<PredictionType> wh
         return this;
     }
 
-    // Create a JObject or JArray for the `changes` argument of `SubmitReview` based on
-    // the predictions in this prediction list and the documents and version of `result`.
-    public dynamic ToChanges(Result result)
-    {
-        if (result.Version == 1)
-            return ToV1Changes(result.Documents.Single());
-        else if (result.Version == 3)
-            return ToV3Changes(result.Documents);
-        else
-            throw new ResultException($"unsupported file version `{result.Version}`");
-    }
-
-    // Create a v1 JObject for the `changes` argument of `SubmitReview`.
-    private JObject ToV1Changes(Document document)
-    {
-        var changes = new JObject();
-
-        foreach (var pair in this.GroupBy<ModelGroup>(prediction => prediction.Model))
-        {
-            var model = pair.Key;
-            var predictions = pair.Value;
-
-            if (model.TaskType == TaskType.CLASSIFICATION)
-                changes[model.Name] = predictions.Single().ToV1Json();
-            else
-                changes[model.Name] = new JArray(
-                    predictions.Select(prediction => prediction.ToV1Json())
-                );
-        }
-
-        // Reproduce empty models sections from the original result file.
-        foreach (var modelName in document.ModelSections)
-            if (!changes.ContainsKey(modelName))
-                changes[modelName] = new JArray();
-
-        return changes;
-    }
-
-    // Create a v3 JArray for the `changes` argument of `SubmitReview`.
-    private JArray ToV3Changes(List<Document> documents)
+    // Create a JArray for the `changes` argument of `Reviews().SubmitReviewAsync()`
+    // based on the predictions in this prediction list and the documents of `result`.
+    public JArray ToChanges(Result result)
     {
         var changes = new JArray();
 
-        foreach (var document in documents)
+        foreach (var document in result.Documents)
         {
+            if (document.Failed) continue;
+
             var modelResults = new JObject();
-            var predictionsByModel = this.Where(
+            var componentResults = new JObject();
+
+            var predictionsByTask = this.Where(
                 document: document
-            ).GroupBy<ModelGroup>(
-                prediction => prediction.Model
+            ).GroupBy<Results.Tasks.Task>(
+                prediction => prediction.Task
             );
 
-            foreach (var modelPair in predictionsByModel)
+            foreach (var taskItem in predictionsByTask)
             {
-                var model = modelPair.Key;
-                var modelPredictions = modelPair.Value;
-
-                modelResults[model.Id.ToString()] = new JArray(
-                    modelPredictions.Select(prediction => prediction.ToV3Json())
+                var taskId = taskItem.Key.Id.ToString();
+                var predictions = new JArray(
+                    taskItem.Value.Select(prediction => prediction.ToJson())
                 );
+
+                if (document.ModelIds.Contains(taskId))
+                    modelResults[taskId] = predictions;
+                else if (document.ComponentIds.Contains(taskId))
+                    componentResults[taskId] = predictions;
             }
 
-            // Reproduce empty model sections from the original result file.
-            foreach (var modelId in document.ModelSections)
+            foreach (var modelId in document.ModelIds)
                 if (!modelResults.ContainsKey(modelId))
                     modelResults[modelId] = new JArray();
+
+            foreach (var componentId in document.ComponentIds)
+                if (!componentResults.ContainsKey(componentId))
+                    componentResults[componentId] = new JArray();
 
             changes.Add(
                 new JObject
                 {
                     ["submissionfile_id"] = document.Id,
                     ["model_results"] = modelResults,
-                    ["component_results"] = new JObject(),
+                    ["component_results"] = componentResults,
                 }
             );
         }
 
         return changes;
+    }
+
+    public override string ToString()
+    {
+        var items = this.Select(item => $"    {item?.ToString()?.Replace("\n", "\n    ") ?? "null"}");
+        return $"{GetType().Name} {{\n{string.Join(",\n", items)}\n}}";
     }
 }

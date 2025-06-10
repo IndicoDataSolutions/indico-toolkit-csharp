@@ -1,101 +1,59 @@
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace IndicoToolkit.Results;
 
 
-public class DocumentExtraction : Extraction
+public record DocumentExtraction : Extraction
 {
-    public int Start { get; set; }
-    public int End { get; set; }
     public HashSet<Group> Groups { get; set; }
+    public List<Span> Spans { get; set; }
 
-    // Create an DocumentExtraction from a v1 prediction object.
-    public static DocumentExtraction FromV1Json(Document document, ModelGroup model, Review? review, JToken json)
+    public Span Span
     {
-        var normalized = Utils.Get<JObject>(json, "normalized");
+        get => Spans.FirstOrDefault(Span.NULL_SPAN);
+        set => Spans = value.IsNull ? new List<Span>() : new List<Span> { value };
+    }
 
-        return new DocumentExtraction
+    public override int Page => Span.Page;
+
+    // Create an `DocumentExtraction` from a prediction JSON.
+    public static new DocumentExtraction FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
+    {
+        return new()
         {
             Document = document,
-            Model = model,
+            Task = task,
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
+            Text = Utils.Get<string>(json, "normalized", "formatted"),
             Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
-            Rejected = Utils.Has<bool>(json, "rejeted") && Utils.Get<bool>(json, "rejeted"),
-            Text = Utils.Get<string>(normalized, "formatted"),
-            Page = Utils.Get<int>(json, "page_num"),
-            Start = Utils.Get<int>(json, "start"),
-            End = Utils.Get<int>(json, "end"),
-            Groups = new HashSet<Group>(
-                Utils.Get<JArray>(json, "groupings")
-                    .Select(value => Group.FromJson(value))
-            ),
+            Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
+            Groups = Utils.Get<JArray>(json, "groupings").Select(Group.FromJson).ToHashSet(),
+            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).Order().ToList(),
             Extras = json as JObject,
         };
     }
 
-    // Create an DocumentExtraction from a v3 prediction object.
-    public static DocumentExtraction FromV3Json(Document document, ModelGroup model, Review? review, JToken json)
+    // Create JSON for auto review changes.
+    public override JObject ToJson()
     {
-        var normalized = Utils.Get<JObject>(json, "normalized");
-        var span = Utils.Get<JArray>(json, "spans").First;
+        Extras["label"] = Label;
+        Extras["confidence"] = JObject.FromObject(Confidences);
+        Extras["groupings"] = new JArray(Groups.Select(group => group.ToJson()));
+        Extras["spans"] = new JArray(Spans.Select(span => span.ToJson()));
 
-        return new DocumentExtraction
+        if (Text != Utils.Get<string>(Extras, "normalized", "formatted"))
         {
-            Document = document,
-            Model = model,
-            Review = review,
-            Label = Utils.Get<string>(json, "label"),
-            Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
-            Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
-            Rejected = Utils.Has<bool>(json, "rejeted") && Utils.Get<bool>(json, "rejeted"),
-            Text = Utils.Get<string>(normalized, "formatted"),
-            Page = Utils.Get<int>(span, "page_num"),
-            Start = Utils.Get<int>(span, "start"),
-            End = Utils.Get<int>(span, "end"),
-            Groups = new HashSet<Group>(
-                Utils.Get<JArray>(json, "groupings")
-                    .Select(value => Group.FromJson(value))
-            ),
-            Extras = json as JObject,
-        };
-    }
-
-    public override JObject ToV1Json()
-    {
-        Extras["label"] = Label;
-        Extras["confidence"] = JObject.FromObject(Confidences);
-        Extras["normalized"]["formatted"] = Text;
-        Extras["page_num"] = Page;
-        Extras["start"] = Start;
-        Extras["end"] = End;
-        Extras["groupings"] = new JArray(Groups.Select(group => group.ToJson()));
+            Extras["normalized"]["formatted"] = Text;
+            Extras["normalized"]["text"] = Text;
+            Extras["text"] = Text;
+        }
 
         if (Accepted)
             Extras["accepted"] = true;
         else if (Rejected)
-            Extras["rejeted"] = true;
-
-        return Extras;
-    }
-
-    public override JObject ToV3Json()
-    {
-        Extras["label"] = Label;
-        Extras["confidence"] = JObject.FromObject(Confidences);
-        Extras["normalized"]["formatted"] = Text;
-        Extras["spans"][0]["page_num"] = Page;
-        Extras["spans"][0]["start"] = Start;
-        Extras["spans"][0]["end"] = End;
-        Extras["groupings"] = new JArray(Groups.Select(group => group.ToJson()));
-
-        if (Accepted)
-            Extras["accepted"] = true;
-        else if (Rejected)
-            Extras["rejeted"] = true;
+            Extras["rejected"] = true;
 
         return Extras;
     }

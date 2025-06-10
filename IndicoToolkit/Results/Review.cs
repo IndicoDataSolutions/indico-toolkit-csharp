@@ -3,21 +3,16 @@ using Newtonsoft.Json.Linq;
 namespace IndicoToolkit.Results;
 
 
-public enum ReviewType
+public record Review
+(
+    int Id,
+    int ReviewerId,
+    string Notes,
+    bool Rejected,
+    ReviewType Type
+) : IComparable<Review>
 {
-    ADMIN,
-    AUTO,
-    MANUAL
-}
-
-
-public class Review : PrettyPrint
-{
-    public int Id { get; init; }
-    public int ReviewerId { get; init; }
-    public string Notes { get; init; }
-    public bool Rejected { get; init; }
-    public ReviewType Type { get; init; }
+    public int CompareTo(Review other) => this.Id.CompareTo(other.Id);
 
     // Determine the review type from its string representation.
     public static ReviewType ReviewTypeFromString(string reviewType)
@@ -32,16 +27,16 @@ public class Review : PrettyPrint
             throw new ResultException($"unsupported review type `{reviewType}`");
     }
 
-    // Create a Review from a v1 `reviews_meta` or a v3 `reviews` list item.
+    // Create a Review from a `reviews` list item.
     public static Review FromJson(JToken json)
     {
-        return new Review
-        {
-            Id = Utils.Get<int>(json, "review_id"),
-            ReviewerId = Utils.Get<int>(json, "reviewer_id"),
-            Notes = Utils.Get<string>(json, "review_notes"),
-            Rejected = Utils.Get<bool>(json, "review_rejected"),
-            Type = Review.ReviewTypeFromString(Utils.Get<string>(json, "review_type")),
-        };
+        return new
+        (
+            Utils.Get<int>(json, "review_id"),
+            Utils.Get<int>(json, "reviewer_id"),
+            Utils.Get<string>(json, "review_notes"),
+            Utils.Get<bool>(json, "review_rejected"),
+            Review.ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
+        );
     }
 };
