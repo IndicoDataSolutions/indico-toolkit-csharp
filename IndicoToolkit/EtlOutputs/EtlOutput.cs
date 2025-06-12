@@ -89,7 +89,7 @@ public record EtlOutput
         return FromPages(textPages, tokenJsonPages, tableJsonPages);
     }
 
-    public static EtlOutput FromPages(
+    private static EtlOutput FromPages(
         IEnumerable<string> textPages,
         IEnumerable<JArray> tokenJsonPages,
         IEnumerable<JArray> tableJsonPages
