@@ -118,4 +118,107 @@ public record EtlOutput
             tablePages
         );
     }
+
+    /*
+    Return a `Token` that contains every character from `span`.
+    Throws `TokenNotFoundException` if one can't be produced.
+    */
+    public Token TokenFor(Span span)
+    {
+        ImmutableList<Token> tokens;
+
+        try
+        {
+            tokens = TokensOnPage[span.Page];
+            var first = BisectRight<Token>(tokens, span.Start, key: token => token.Span.End);
+            var last = BisectLeft<Token>(tokens, span.End,  key: token => token.Span.Start, low: first);
+            tokens = tokens.GetRange(first, last - first);
+        }
+        catch
+        {
+            throw new TokenNotFoundException($"no token contains {span}");
+        }
+
+        return new Token(
+            Text[span.Range],
+            new Box(
+                span.Page,
+                tokens.Select(token => token.Box.Top).Min(),
+                tokens.Select(token => token.Box.Left).Min(),
+                tokens.Select(token => token.Box.Right).Max(),
+                tokens.Select(token => token.Box.Bottom).Max()
+            ),
+            span
+        );
+    }
+
+    /*
+    Return the `Table` and `Cell` that contain the midpoint of `token`.
+    Throws `TableCellNotFoundException` if it's not inside a table cell.
+    */
+    public (Table, Cell) TableCellFor(Token token)
+    {
+        var tokenMidV = (token.Box.Top + token.Box.Bottom) / 2;
+        var tokenMidH = (token.Box.Left + token.Box.Right) / 2;
+
+        var table = TablesOnPage[token.Box.Page]
+            .Where(table => (
+                (table.Box.Top  <= tokenMidV && tokenMidV <= table.Box.Bottom) &&
+                (table.Box.Left <= tokenMidH && tokenMidH <= table.Box.Right)
+            ))
+            .FirstOrDefault();
+
+        if (table == null)
+            throw new TableCellNotFoundException($"no table contains {token}");
+
+        try
+        {
+            var rowIndex = BisectLeft<ImmutableList<Cell>>(table.Rows, tokenMidV, key: row => row[0].Box.Bottom);
+            var row = table.Rows[rowIndex];
+
+            var cellIndex = BisectLeft<Cell>(row, tokenMidH, key: cell => cell.Box.Right);
+            var cell = row[cellIndex];
+
+            return (table, cell);
+        }
+        catch
+        {
+            throw new TableCellNotFoundException($"no cell contains {token}");
+        }
+    }
+
+    private static int BisectLeft<T>(ImmutableList<T> tokens, int search, Func<T, int> key, int low = 0)
+    {
+        int high = tokens.Count;
+
+        while (low < high)
+        {
+            int mid = (low + high) / 2;
+
+            if (key(tokens[mid]) < search)
+                low = mid + 1;
+            else
+                high = mid;
+        }
+
+        return low;
+    }
+
+    private static int BisectRight<T>(ImmutableList<T> tokens, int search, Func<T, int> key)
+    {
+        int low = 0;
+        int high = tokens.Count;
+
+        while (low < high)
+        {
+            int mid = (low + high) / 2;
+
+            if (search < key(tokens[mid]))
+                high = mid;
+            else
+                low = mid + 1;
+        }
+
+        return low;
+    }
 }
