@@ -34,8 +34,8 @@ public record Range
 
         return new
         (
-            rows[0],
-            columns[0],
+            rows.First(),
+            columns.First(),
             rows.Count,
             columns.Count,
             rows,

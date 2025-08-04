@@ -173,7 +173,7 @@ public record EtlOutput
 
         try
         {
-            var rowIndex = BisectLeft<ImmutableList<Cell>>(table.Rows, tokenMidV, key: row => row[0].Box.Bottom);
+            var rowIndex = BisectLeft<ImmutableList<Cell>>(table.Rows, tokenMidV, key: row => row.First().Box.Bottom);
             var row = table.Rows[rowIndex];
 
             var cellIndex = BisectLeft<Cell>(row, tokenMidH, key: cell => cell.Box.Right);
