@@ -36,7 +36,8 @@ public record Citation
     {
         return new()
         {
-            ["response"] = new JObject {
+            ["response"] = new JObject
+            {
                 ["start"] = Start,
                 ["end"] = End,
             },

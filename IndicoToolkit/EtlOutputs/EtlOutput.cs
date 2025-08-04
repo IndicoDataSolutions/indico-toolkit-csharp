@@ -131,7 +131,7 @@ public record EtlOutput
         {
             tokens = TokensOnPage[span.Page];
             var first = BisectRight<Token>(tokens, span.Start, key: token => token.Span.End);
-            var last = BisectLeft<Token>(tokens, span.End,  key: token => token.Span.Start, low: first);
+            var last = BisectLeft<Token>(tokens, span.End, key: token => token.Span.Start, low: first);
             tokens = tokens.GetRange(first, last - first);
         }
         catch
@@ -163,7 +163,7 @@ public record EtlOutput
 
         var table = TablesOnPage[token.Box.Page]
             .Where(table => (
-                (table.Box.Top  <= tokenMidV && tokenMidV <= table.Box.Bottom) &&
+                (table.Box.Top <= tokenMidV && tokenMidV <= table.Box.Bottom) &&
                 (table.Box.Left <= tokenMidH && tokenMidH <= table.Box.Right)
             ))
             .FirstOrDefault();

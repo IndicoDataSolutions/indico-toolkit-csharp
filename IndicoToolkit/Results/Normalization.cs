@@ -51,8 +51,8 @@ public static class Normalization
         if (
             (
                 taskType == TaskType.DOCUMENT_EXTRACTION
-                || taskType == TaskType.GENAI_EXTRACTION
                 || taskType == TaskType.FORM_EXTRACTION
+                || taskType == TaskType.GENAI_EXTRACTION
             )
             && !Utils.Has<JObject>(json, "normalized")
         )
