@@ -9,6 +9,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList<DocumentExtraction> DocumentExtractions => OfType<DocumentExtraction>();
     public PredictionList<Extraction> Extractions => OfType<Extraction>();
     public PredictionList<FormExtraction> FormExtractions => OfType<FormExtraction>();
+    public PredictionList<Summarization> Summarizations => OfType<Summarization>();
     public PredictionList<Unbundling> Unbundlings => OfType<Unbundling>();
 
     public PredictionList() : base() { }
