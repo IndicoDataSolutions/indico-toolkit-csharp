@@ -5,7 +5,9 @@ namespace IndicoToolkit.Results;
 
 public record Classification : Prediction
 {
-    // Create a `Classification` from a prediction JSON.
+    /*
+    Create a `Classification` from a prediction JSON.
+    */
     public static new Classification FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         return new()
@@ -19,7 +21,9 @@ public record Classification : Prediction
         };
     }
 
-    // Create JSON for auto review changes.
+    /*
+    Create JSON for auto review changes.
+    */
     public override JObject ToJson()
     {
         Extras["label"] = Label;

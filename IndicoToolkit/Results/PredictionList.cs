@@ -14,7 +14,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList() : base() { }
     public PredictionList(IEnumerable<PredictionType> collection) : base(collection) { }
 
-    // Apply `function` to all predictions.
+    /*
+    Apply `function` to all predictions.
+    */
     public PredictionList<PredictionType> Apply(Action<PredictionType> function)
     {
         foreach (var prediction in this)
@@ -23,7 +25,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         return this;
     }
 
-    // Group predictions into a dictionary using `key`.
+    /*
+    Group predictions into a dictionary using `key`.
+    */
     public Dictionary<KeyType, PredictionList<PredictionType>> GroupBy<KeyType>(Func<PredictionType, KeyType> key)
     {
         var groupedPredictions = new Dictionary<KeyType, PredictionList<PredictionType>>();
@@ -41,9 +45,11 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         return groupedPredictions;
     }
 
-    // Group predictions into a dictionary using `keys`.
-    // Each prediction is associated with every key in the iterable individually.
-    // If the iterable is empty, the prediction is not included in any group.
+    /*
+    Group predictions into a dictionary using `keys`.
+    Each prediction is associated with every key in the iterable individually.
+    If the iterable is empty, the prediction is not included in any group.
+    */
     public Dictionary<KeyType, PredictionList<PredictionType>> GroupByIter<KeyType>(Func<PredictionType, IEnumerable<KeyType>> keys)
     {
         var groupedPredictions = new Dictionary<KeyType, PredictionList<PredictionType>>();
@@ -62,13 +68,17 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         return groupedPredictions;
     }
 
-    // Return a new prediction list containing predictions of type `Subtype`.
+    /*
+    Return a new prediction list containing predictions of type `Subtype`.
+    */
     public PredictionList<Subtype> OfType<Subtype>() where Subtype : Prediction
     {
         return new PredictionList<Subtype>(Enumerable.OfType<Subtype>(this));
     }
 
-    // Return a new prediction list with predictions sorted by `key`.
+    /*
+    Return a new prediction list with predictions sorted by `key`.
+    */
     public PredictionList<PredictionType> OrderBy(Func<PredictionType, IComparable> key, bool reverse = false)
     {
         if (reverse)
@@ -77,32 +87,34 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             return new PredictionList<PredictionType>(Enumerable.OrderBy(this, key));
     }
 
-    // Return a new prediction list containing predictions that match
-    // all of the specified filters.
-    //
-    // predicate: predictions for which this function returns True,
-    // document: predictions from this document,
-    // documentIn: predictions from any of these documents,
-    // task: predictions from this task,
-    // taskIn: predictions from any of these tasks,
-    // taskName: predictions with this task name,
-    // taskNameIn: predictions with any of these task names,
-    // taskType: predictions with this task type,
-    // taskTypeIn: predictions with any of these task types,
-    // review: predictions from this review,
-    // reviewIn: predictions from any of these reviews,
-    // reviewType: predictions from this review type,
-    // reviewTypeIn: predictions from any of these review types,
-    // label: predictions with this label,
-    // labelIn: predictions with any of these labels,
-    // page: extractions on this page,
-    // pageIn: extractions on any of these pages,
-    // minConfidence: predictions with confidence >= this threshold,
-    // maxConfidence: predictions with confidence <= this threshold,
-    // accepted: extractions that are accepted (or not),
-    // rejected: extractions that are rejected (or not),
-    // checked_: form extractions that are checked (or not),
-    // signed: form extractions that are signed (or not).
+    /*
+    Return a new prediction list containing predictions that match
+    all of the specified filters.
+
+    predicate: predictions for which this function returns true,
+    document: predictions from this document,
+    documentIn: predictions from any of these documents,
+    task: predictions from this task,
+    taskIn: predictions from any of these tasks,
+    taskName: predictions with this task name,
+    taskNameIn: predictions with any of these task names,
+    taskType: predictions with this task type,
+    taskTypeIn: predictions with any of these task types,
+    review: predictions from this review,
+    reviewIn: predictions from any of these reviews,
+    reviewType: predictions from this review type,
+    reviewTypeIn: predictions from any of these review types,
+    label: predictions with this label,
+    labelIn: predictions with any of these labels,
+    page: extractions on this page,
+    pageIn: extractions on any of these pages,
+    minConfidence: predictions with confidence >= this threshold,
+    maxConfidence: predictions with confidence <= this threshold,
+    accepted: extractions that are accepted (or not),
+    rejected: extractions that are rejected (or not),
+    checked_: form extractions that are checked (or not),
+    signed: form extractions that are signed (or not).
+    */
     public PredictionList<PredictionType> Where(
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
@@ -208,36 +220,46 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         );
     }
 
-    // Accept all extractions in the list.
+    /*
+    Mark extractions as accepted for auto review.
+    */
     public PredictionList<PredictionType> Accept()
     {
         Extractions.Apply(prediction => prediction.Accept());
         return this;
     }
 
-    // Unaccept all extractions in the list.
+    /*
+    Mark extractions as not accepted for auto review.
+    */
     public PredictionList<PredictionType> Unaccept()
     {
         Extractions.Apply(prediction => prediction.Unaccept());
         return this;
     }
 
-    // Reject all extractions in the list.
+    /*
+    Mark extractions as rejected for auto review.
+    */
     public PredictionList<PredictionType> Reject()
     {
         Extractions.Apply(prediction => prediction.Reject());
         return this;
     }
 
-    // Unreject all extractions in the list.
+    /*
+    Mark extractions as not rejected for auto review.
+    */
     public PredictionList<PredictionType> Unreject()
     {
         Extractions.Apply(prediction => prediction.Unreject());
         return this;
     }
 
-    // Create a JArray for the `changes` argument of `Reviews().SubmitReviewAsync()`
-    // based on the predictions in this prediction list and the documents of `result`.
+    /*
+    Create a JArray for the `changes` argument of `Reviews().SubmitReviewAsync()`
+    based on the predictions in this prediction list and the documents in `result`.
+    */
     public JArray ToChanges(Result result)
     {
         var changes = new JArray();

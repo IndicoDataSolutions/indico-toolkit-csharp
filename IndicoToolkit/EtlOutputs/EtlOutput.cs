@@ -18,7 +18,7 @@ public record EtlOutput
     Load `etlOutputUri` as an `EtlOutput` record. A `reader` function must be
     supplied to read JSON and text strings from disk, storage API, or Indico client.
 
-    Use `text`, `tokens`, and `tables` to specify what to load.
+    Use `text`, `tokens`, and `tables` to specify what not to load.
     */
     public static EtlOutput Load(
         string etlOutputUri,
@@ -57,7 +57,7 @@ public record EtlOutput
     Load `etlOutputUri` as an `EtlOutput` record. A `reader` coroutine must be
     supplied to read JSON and text strings from disk, storage API, or Indico client.
 
-    Use `text`, `tokens`, and `tables` to specify what to load.
+    Use `text`, `tokens`, and `tables` to specify what not to load.
     */
     public static async Task<EtlOutput> LoadAsync(
         string etlOutputUri,

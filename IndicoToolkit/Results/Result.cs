@@ -21,7 +21,9 @@ public record Result
 
     public int CompareTo(Result other) => this.SubmissionId.CompareTo(other.SubmissionId);
 
-    // Create a `Result` from the root object of a result file.
+    /*
+    Create a `Result` from the root object of a result file.
+    */
     public static Result FromJson(JObject json)
     {
         var fileVersion = Utils.Get<int>(json, "file_version");

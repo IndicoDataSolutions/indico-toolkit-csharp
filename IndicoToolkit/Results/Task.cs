@@ -21,7 +21,9 @@ public record Task
 {
     public int CompareTo(Task other) => this.Id.CompareTo(other.Id);
 
-    // Determine the task type of a task from its string representation.
+    /*
+    Determine the task type of a task from its string representation.
+    */
     public static TaskType TaskTypeFromString(string taskType)
     {
         if (taskType == "classification")
@@ -42,7 +44,9 @@ public record Task
             throw new ResultException($"unsupported task type `{taskType}`");
     }
 
-    // Create a `Task` from a `modelgroup_metadata` list item.
+    /*
+    Create a `Task` from a `modelgroup_metadata` list item.
+    */
     public static Task FromJson(JToken json)
     {
         return new

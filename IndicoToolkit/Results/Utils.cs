@@ -5,8 +5,10 @@ namespace IndicoToolkit.Results;
 
 public static class Utils
 {
-    // Return the value of type `ValueType` obtained by traversing `json` using `keys`.
-    // Throw `ResultException` if a key doesn't exist or the value has the wrong type.
+    /*
+    Return the value of type `ValueType` obtained by traversing `json` using `keys`.
+    Throw `ResultException` if a key doesn't exist or the value has the wrong type.
+    */
     public static ValueType Get<ValueType>(JToken? json, params object[] keys)
     {
         foreach (var key in keys)
@@ -72,7 +74,9 @@ public static class Utils
         }
     }
 
-    // Check if `json` can be traversed using `keys` to a value of type `ValueType`.
+    /*
+    Check if `json` can be traversed using `keys` to a value of type `ValueType`.
+    */
     public static bool Has<ValueType>(JToken? json, params object[] keys)
     {
         foreach (var key in keys)

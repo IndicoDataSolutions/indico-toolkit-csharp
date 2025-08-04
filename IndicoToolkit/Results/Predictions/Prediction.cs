@@ -19,7 +19,9 @@ public abstract record Prediction
         set => Confidences[Label] = value;
     }
 
-    // Create a `Prediction` subtype appropriate for `task.Type` from a prediction JSON.
+    /*
+    Create a `Prediction` subtype appropriate for `task.Type` from a prediction JSON.
+    */
     public static Prediction FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         Normalization.NormalizePredictionJson(task.Type, json);
@@ -38,6 +40,8 @@ public abstract record Prediction
             throw new ResultException($"unsupported task type `{task.Type}`");
     }
 
-    // Create JSON for auto review changes.
+    /*
+    Create JSON for auto review changes.
+    */
     public abstract JObject ToJson();
 }

@@ -12,19 +12,24 @@ public record Document
     bool Failed,
     string Error,
     string Traceback,
-    // Auto review changes must reproduce all model and component sections that were
-    // present in the original result file. This may not be possible from the
-    // predictions alone--if a model or component had an empty section because it didn't
-    // produce predictions or if all of the predictions for that section were dropped.
-    // As such, the model and component IDs seen when parsing a result file are tracked
-    // per-document so that the empty sections can be reproduced later.
+
+    /*
+    Auto review changes must reproduce all model and component sections that were
+    present in the original result file. This may not be possible from the
+    predictions alone--if a model or component had an empty section because it didn't
+    produce predictions or if all of the predictions for that section were dropped.
+    As such, the model and component IDs seen when parsing a result file are tracked
+    per-document so that the empty sections can be reproduced later.
+    */
     ImmutableHashSet<string> ModelIds,
     ImmutableHashSet<string> ComponentIds
 ) : IComparable<Document>
 {
     public int CompareTo(Document other) => this.Id.CompareTo(other.Id);
 
-    // Create a `Document` from a `submission_results` list item.
+    /*
+    Create a `Document` from a `submission_results` list item.
+    */
     public static Document FromJson(JToken json)
     {
         var modelResults = Utils.Get<JObject>(json, "model_results", "ORIGINAL");
@@ -45,7 +50,9 @@ public record Document
         );
     }
 
-    // Create a `Document` from an `errored_files` list item.
+    /*
+    Create a `Document` from an `errored_files` list item.
+    */
     public static Document FromErroredFileJson(JToken json)
     {
         return new
