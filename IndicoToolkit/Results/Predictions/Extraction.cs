@@ -30,4 +30,20 @@ public abstract record Extraction : Prediction
     {
         Rejected = false;
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence",
+            "Text",
+            "Accepted",
+            "Rejected"
+        );
+    }
 }

@@ -56,4 +56,15 @@ public record Task
             TaskTypeFromString(Utils.Get<string>(json, "task_type"))
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Id",
+            "Name",
+            "Type"
+        );
+    }
 }

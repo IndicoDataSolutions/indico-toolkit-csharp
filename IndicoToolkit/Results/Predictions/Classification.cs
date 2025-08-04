@@ -31,4 +31,17 @@ public record Classification : Prediction
 
         return Extras;
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence"
+        );
+    }
 }

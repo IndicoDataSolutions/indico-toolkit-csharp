@@ -67,4 +67,18 @@ public record Document
             ImmutableHashSet<string>.Empty
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Id",
+            "Name",
+            "EtlOutputUri",
+            "Failed",
+            "Error",
+            "Traceback"
+        );
+    }
 }

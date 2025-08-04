@@ -111,4 +111,19 @@ public record Result
             predictions
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "SubmissionId",
+            "SubmissionId",
+            "Documents",
+            "Tasks",
+            "Reviews",
+            "Predictions",
+            "Rejected"
+        );
+    }
 }

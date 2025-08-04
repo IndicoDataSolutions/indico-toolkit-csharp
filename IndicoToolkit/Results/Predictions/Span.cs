@@ -42,6 +42,19 @@ public record Span
         };
     }
 
+    public override string ToString()
+    {
+        return IsNull
+            ? "NULL_SPAN"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
+                "Page",
+                "Start",
+                "End"
+            );
+    }
+
     /*
     It's more ergonomic to represent the lack of spans with a special null span
     object rather than using `null` or throwing an exception. This lets you e.g.

@@ -43,4 +43,17 @@ public record Review
             Review.ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Id",
+            "ReviewerId",
+            "Notes",
+            "Rejected",
+            "Type"
+        );
+    }
 };

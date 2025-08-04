@@ -61,4 +61,22 @@ public record DocumentExtraction : Extraction
 
         return Extras;
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence",
+            "Text",
+            "Accepted",
+            "Rejected",
+            "Groups",
+            "Spans"
+        );
+    }
 }

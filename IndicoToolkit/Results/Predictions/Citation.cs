@@ -44,6 +44,19 @@ public record Citation
         };
     }
 
+    public override string ToString()
+    {
+        return IsNull
+            ? "NULL_CITATION"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
+                "Start",
+                "End",
+                "Span"
+            );
+    }
+
     /*
     It's more ergonomic to represent the lack of citations with a special null citation
     object rather than using `null` or raising an error. This lets you e.g. sort by the

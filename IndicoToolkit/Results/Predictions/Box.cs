@@ -52,6 +52,21 @@ public record Box
         );
     }
 
+    public override string ToString()
+    {
+        return IsNull
+            ? "NULL_BOX"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
+                "Page",
+                "Top",
+                "Left",
+                "Right",
+                "Bottom"
+            );
+    }
+
     /*
     It's more ergonomic to represent the lack of a bounding box with a special null
     box object rather than using `null` or raising an error. This lets you e.g. sort

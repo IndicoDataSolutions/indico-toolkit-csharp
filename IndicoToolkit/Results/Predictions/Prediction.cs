@@ -44,4 +44,17 @@ public abstract record Prediction
     Create JSON for auto review changes.
     */
     public abstract JObject ToJson();
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence"
+        );
+    }
 }

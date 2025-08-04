@@ -311,10 +311,4 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
         return changes;
     }
-
-    public override string ToString()
-    {
-        var items = this.Select(item => $"    {item?.ToString()?.Replace("\n", "\n    ") ?? "null"}");
-        return $"{GetType().Name} {{\n{string.Join(",\n", items)}\n}}";
-    }
 }

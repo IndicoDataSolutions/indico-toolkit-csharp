@@ -39,4 +39,15 @@ public record Group
             ["group_index"] = Index,
         };
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Id",
+            "Name",
+            "Index"
+        );
+    }
 }
