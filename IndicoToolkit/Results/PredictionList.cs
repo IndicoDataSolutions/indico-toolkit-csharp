@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System.Collections.Immutable;
 
 namespace IndicoToolkit.Results;
 
@@ -190,10 +191,18 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             predicates.Add(pred => labelIn.Contains(pred.Label));
 
         if (page != null)
-            predicates.Add(pred => pred is Extraction && (pred as Extraction).Page == page);
+            predicates.Add(pred =>
+                pred is Extraction && (pred as Extraction).Page == page
+                ||
+                pred is Unbundling && (pred as Unbundling).Pages.Contains((int)page)
+            );
 
         if (pageIn != null)
-            predicates.Add(pred => pred is Extraction && pageIn.Contains((pred as Extraction).Page));
+            predicates.Add(pred =>
+                pred is Extraction && pageIn.Contains((pred as Extraction).Page)
+                ||
+                pred is Unbundling && pageIn.ToImmutableHashSet().Intersect((pred as Unbundling).Pages).Any()
+            );
 
         if (minConfidence != null)
             predicates.Add(pred => pred.Confidence >= minConfidence);
@@ -208,10 +217,18 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             predicates.Add(pred => pred is Extraction && (pred as Extraction).Rejected == rejected);
 
         if (checked_ != null)
-            predicates.Add(pred => pred is FormExtraction && (pred as FormExtraction).Checked == checked_);
+            predicates.Add(pred =>
+                pred is FormExtraction
+                && (pred as FormExtraction).Type == FormExtractionType.CHECKBOX
+                && (pred as FormExtraction).Checked == checked_
+            );
 
         if (signed != null)
-            predicates.Add(pred => pred is FormExtraction && (pred as FormExtraction).Signed == signed);
+            predicates.Add(pred =>
+                pred is FormExtraction
+                && (pred as FormExtraction).Type == FormExtractionType.CHECKBOX
+                && (pred as FormExtraction).Signed == signed
+            );
 
         return new PredictionList<PredictionType>(
             Enumerable.Where(
