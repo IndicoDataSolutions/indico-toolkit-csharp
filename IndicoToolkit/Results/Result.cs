@@ -67,36 +67,36 @@ public record Result
             var document = documents.Where(document => document.Id == documentId).First();
             var modelResultsJson = Utils.Get<JObject>(documentJson, "model_results");
             var componentResultsJson = Utils.Get<JObject>(documentJson, "component_results");
-            var originalJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL").Properties()
+            var originalResultsJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL").Properties()
                 .Concat(Utils.Get<JObject>(componentResultsJson, "ORIGINAL").Properties());
 
             // Parse original predictions (which don't have an associated review).
-            foreach (var taskJson in originalJson)
+            foreach (var taskJson in originalResultsJson)
             {
                 var taskId = int.Parse(taskJson.Name);
                 var task = tasks.Where(task => task.Id == taskId).First();
 
-                foreach (var predictionJson in taskJson.Value as JArray)
+                foreach (var taskPredictions in taskJson.Value as JArray)
                     predictions.Add(Prediction.FromJson(
-                        document, task, review: null, predictionJson
+                        document, task, review: null, taskPredictions
                     ));
             }
 
-            // Parse final predictions (which are associated with the most recent review).
+            // Parse final predictions (associated with the most recent review).
             if (reviews.Any())
             {
                 var review = reviews.Last();
-                var finalJson = Utils.Get<JObject>(modelResultsJson, "FINAL").Properties()
+                var finalResultsJson = Utils.Get<JObject>(modelResultsJson, "FINAL").Properties()
                     .Concat(Utils.Get<JObject>(componentResultsJson, "FINAL").Properties());
 
-                foreach (var taskJson in finalJson)
+                foreach (var taskJson in finalResultsJson)
                 {
                     var taskId = int.Parse(taskJson.Name);
                     var task = tasks.Where(task => task.Id == taskId).First();
 
-                    foreach (var predictionJson in taskJson.Value as JArray)
+                    foreach (var taskPredictions in taskJson.Value as JArray)
                         predictions.Add(Prediction.FromJson(
-                            document, task, review, predictionJson
+                            document, task, review, taskPredictions
                         ));
                 }
             }
