@@ -23,5 +23,15 @@ public record Token
             Span.FromJson(Utils.Get<JObject>(json, "doc_offset"))
         );
     }
-}
 
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Text",
+            "Box",
+            "Span"
+        );
+    }
+}

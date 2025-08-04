@@ -42,4 +42,16 @@ public record Range
             columns
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Row",
+            "Column",
+            "RowSpan",
+            "ColumnSpan"
+        );
+    }
 }

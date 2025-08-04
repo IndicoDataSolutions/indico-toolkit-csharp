@@ -221,4 +221,15 @@ public record EtlOutput
 
         return low;
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Text",
+            "Tokens",
+            "Tables"
+        );
+    }
 }

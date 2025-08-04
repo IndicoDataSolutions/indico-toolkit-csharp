@@ -44,5 +44,18 @@ public record Cell
                 .ToImmutableList()
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Type",
+            "Text",
+            "Box",
+            "Range",
+            "Spans"
+        );
+    }
 }
 

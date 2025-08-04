@@ -43,4 +43,14 @@ public record Table
             columns
         );
     }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Box",
+            "Cells"
+        );
+    }
 }
