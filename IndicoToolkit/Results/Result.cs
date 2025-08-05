@@ -22,6 +22,26 @@ public record Result
     public int CompareTo(Result other) => this.SubmissionId.CompareTo(other.SubmissionId);
 
     /*
+    Load `resultUri` as a `Result` record. A `reader` function must be supplied to read
+    JSON from disk, storage API, or Indico client.
+    */
+    public static Result Load(string resultUri, Func<string, string> reader)
+    {
+        var resultJson = JObject.Parse(reader(resultUri));
+        return FromJson(resultJson);
+    }
+
+    /*
+    Load `resultUri` as a `Result` record. A `reader` coroutine must be supplied to read
+    JSON from disk, storage API, or Indico client.
+    */
+    public static async Task<Result> LoadAsync(string resultUri, Func<string, Task<string>> reader)
+    {
+        var resultJson = JObject.Parse(await reader(resultUri));
+        return FromJson(resultJson);
+    }
+
+    /*
     Create a `Result` from the root object of a result file.
     */
     public static Result FromJson(JObject json)
