@@ -36,7 +36,8 @@ public record Citation
     {
         return new()
         {
-            ["response"] = new JObject {
+            ["response"] = new JObject
+            {
                 ["start"] = Start,
                 ["end"] = End,
             },
@@ -44,10 +45,25 @@ public record Citation
         };
     }
 
-    // It's more ergonomic to represent the lack of citations with a special null citation
-    // object rather than using `null` or raising an error. This lets you e.g. sort by the
-    // `citation` property without having to constantly check for `null`, while still
-    // allowing you do a "null check" with `summarization.citation.IsNull`.
+    public override string ToString()
+    {
+        return IsNull
+            ? "NULL_CITATION"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
+                "Start",
+                "End",
+                "Span"
+            );
+    }
+
+    /*
+    It's more ergonomic to represent the lack of citations with a special null citation
+    object rather than using `null` or raising an error. This lets you e.g. sort by the
+    `citation` property without having to constantly check for `null`, while still
+    allowing you do a "null check" with `summarization.citation.IsNull`.
+    */
     public static readonly Citation NULL_CITATION = new(0, 0, Span.NULL_SPAN);
     public bool IsNull => this == NULL_CITATION;
 }

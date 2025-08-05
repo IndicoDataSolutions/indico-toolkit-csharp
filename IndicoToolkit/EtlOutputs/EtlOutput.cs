@@ -1,0 +1,235 @@
+using IndicoToolkit.Results;
+using Newtonsoft.Json.Linq;
+using System.Collections.Immutable;
+
+namespace IndicoToolkit.EtlOutputs;
+
+public record EtlOutput
+(
+    string Text,
+    ImmutableList<string> TextOnPage,
+    ImmutableList<Token> Tokens,
+    ImmutableList<ImmutableList<Token>> TokensOnPage,
+    ImmutableList<Table> Tables,
+    ImmutableList<ImmutableList<Table>> TablesOnPage
+)
+{
+    /*
+    Load `etlOutputUri` as an `EtlOutput` record. A `reader` function must be
+    supplied to read JSON and text strings from disk, storage API, or Indico client.
+
+    Use `text`, `tokens`, and `tables` to specify what not to load.
+    */
+    public static EtlOutput Load(
+        string etlOutputUri,
+        Func<string, string> reader,
+        bool text = true,
+        bool tokens = true,
+        bool tables = true
+    )
+    {
+        var etlOutputJson = JObject.Parse(reader(etlOutputUri));
+        var pages = Utils.Get<JArray>(etlOutputJson, "pages");
+
+        IEnumerable<string> textPages;
+        IEnumerable<JArray> tokenJsonPages;
+        IEnumerable<JArray> tableJsonPages;
+
+        if (text && Utils.Has<string>(pages, 0, "text"))
+            textPages = pages.Select(page => reader(Utils.Get<string>(page, "text")));
+        else
+            textPages = ImmutableList<string>.Empty;
+
+        if (tokens && Utils.Has<string>(pages, 0, "tokens"))
+            tokenJsonPages = pages.Select(page => JArray.Parse(reader(Utils.Get<string>(page, "tokens"))));
+        else
+            tokenJsonPages = ImmutableList<JArray>.Empty;
+
+        if (tables && Utils.Has<string>(pages, 0, "tables"))
+            tableJsonPages = pages.Select(page => JArray.Parse(reader(Utils.Get<string>(page, "tables"))));
+        else
+            tableJsonPages = ImmutableList<JArray>.Empty;
+
+        return FromPages(textPages, tokenJsonPages, tableJsonPages);
+    }
+
+    /*
+    Load `etlOutputUri` as an `EtlOutput` record. A `reader` coroutine must be
+    supplied to read JSON and text strings from disk, storage API, or Indico client.
+
+    Use `text`, `tokens`, and `tables` to specify what not to load.
+    */
+    public static async Task<EtlOutput> LoadAsync(
+        string etlOutputUri,
+        Func<string, Task<string>> reader,
+        bool text = true,
+        bool tokens = true,
+        bool tables = true
+    )
+    {
+        var etlOutputJson = JObject.Parse(await reader(etlOutputUri));
+        var pages = Utils.Get<JArray>(etlOutputJson, "pages");
+
+        var textPages = new List<string>();
+        var tokenJsonPages = new List<JArray>();
+        var tableJsonPages = new List<JArray>();
+
+        if (text && Utils.Has<string>(pages, 0, "text"))
+            foreach (var page in pages)
+                textPages.Add(await reader(Utils.Get<string>(page, "text")));
+
+        if (tokens && Utils.Has<string>(pages, 0, "tokens"))
+            foreach (var page in pages)
+                tokenJsonPages.Add(JArray.Parse(await reader(Utils.Get<string>(page, "tokens"))));
+
+        if (tables && Utils.Has<string>(pages, 0, "tables"))
+            foreach (var page in pages)
+                tableJsonPages.Add(JArray.Parse(await reader(Utils.Get<string>(page, "tables"))));
+
+        return FromPages(textPages, tokenJsonPages, tableJsonPages);
+    }
+
+    private static EtlOutput FromPages(
+        IEnumerable<string> textPages,
+        IEnumerable<JArray> tokenJsonPages,
+        IEnumerable<JArray> tableJsonPages
+    )
+    {
+        var tokenPages = tokenJsonPages
+            .Select(page => page
+                .Select(Token.FromJson)
+                .OrderBy(token => token.Span)
+                .ToImmutableList())
+            .ToImmutableList();
+
+        var tablePages = tableJsonPages
+            .Select(page => page
+                .Select(Table.FromJson)
+                .OrderBy(table => table.Box)
+                .ToImmutableList())
+            .ToImmutableList();
+
+        return new(
+            string.Join("\n", textPages),
+            textPages.ToImmutableList(),
+            tokenPages.SelectMany(page => page).ToImmutableList(),
+            tokenPages,
+            tablePages.SelectMany(page => page).ToImmutableList(),
+            tablePages
+        );
+    }
+
+    /*
+    Return a `Token` that contains every character from `span`.
+    Throws `TokenNotFoundException` if one can't be produced.
+    */
+    public Token TokenFor(Span span)
+    {
+        ImmutableList<Token> tokens;
+
+        try
+        {
+            tokens = TokensOnPage[span.Page];
+            var first = BisectRight<Token>(tokens, span.Start, key: token => token.Span.End);
+            var last = BisectLeft<Token>(tokens, span.End, key: token => token.Span.Start, low: first);
+            tokens = tokens.GetRange(first, last - first);
+        }
+        catch
+        {
+            throw new TokenNotFoundException($"no token contains {span}");
+        }
+
+        return new Token(
+            Text[span.Range],
+            new Box(
+                span.Page,
+                tokens.Select(token => token.Box.Top).Min(),
+                tokens.Select(token => token.Box.Left).Min(),
+                tokens.Select(token => token.Box.Right).Max(),
+                tokens.Select(token => token.Box.Bottom).Max()
+            ),
+            span
+        );
+    }
+
+    /*
+    Return the `Table` and `Cell` that contain the midpoint of `token`.
+    Throws `TableCellNotFoundException` if it's not inside a table cell.
+    */
+    public (Table, Cell) TableCellFor(Token token)
+    {
+        var tokenMidV = (token.Box.Top + token.Box.Bottom) / 2;
+        var tokenMidH = (token.Box.Left + token.Box.Right) / 2;
+
+        var table = TablesOnPage[token.Box.Page]
+            .Where(table => (
+                (table.Box.Top <= tokenMidV && tokenMidV <= table.Box.Bottom) &&
+                (table.Box.Left <= tokenMidH && tokenMidH <= table.Box.Right)
+            ))
+            .FirstOrDefault();
+
+        if (table == null)
+            throw new TableCellNotFoundException($"no table contains {token}");
+
+        try
+        {
+            var rowIndex = BisectLeft<ImmutableList<Cell>>(table.Rows, tokenMidV, key: row => row.First().Box.Bottom);
+            var row = table.Rows[rowIndex];
+
+            var cellIndex = BisectLeft<Cell>(row, tokenMidH, key: cell => cell.Box.Right);
+            var cell = row[cellIndex];
+
+            return (table, cell);
+        }
+        catch
+        {
+            throw new TableCellNotFoundException($"no cell contains {token}");
+        }
+    }
+
+    private static int BisectLeft<T>(ImmutableList<T> tokens, int search, Func<T, int> key, int low = 0)
+    {
+        int high = tokens.Count;
+
+        while (low < high)
+        {
+            int mid = (low + high) / 2;
+
+            if (key(tokens[mid]) < search)
+                low = mid + 1;
+            else
+                high = mid;
+        }
+
+        return low;
+    }
+
+    private static int BisectRight<T>(ImmutableList<T> tokens, int search, Func<T, int> key)
+    {
+        int low = 0;
+        int high = tokens.Count;
+
+        while (low < high)
+        {
+            int mid = (low + high) / 2;
+
+            if (search < key(tokens[mid]))
+                high = mid;
+            else
+                low = mid + 1;
+        }
+
+        return low;
+    }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Text",
+            "Tokens",
+            "Tables"
+        );
+    }
+}

@@ -16,7 +16,9 @@ public record DocumentExtraction : Extraction
 
     public override int Page => Span.Page;
 
-    // Create an `DocumentExtraction` from a prediction JSON.
+    /*
+    Create an `DocumentExtraction` from a prediction JSON.
+    */
     public static new DocumentExtraction FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         return new()
@@ -35,7 +37,9 @@ public record DocumentExtraction : Extraction
         };
     }
 
-    // Create JSON for auto review changes.
+    /*
+    Create JSON for auto review changes.
+    */
     public override JObject ToJson()
     {
         Extras["label"] = Label;
@@ -56,5 +60,23 @@ public record DocumentExtraction : Extraction
             Extras["rejected"] = true;
 
         return Extras;
+    }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence",
+            "Text",
+            "Accepted",
+            "Rejected",
+            "Groups",
+            "Spans"
+        );
     }
 }

@@ -1,12 +1,15 @@
 using Newtonsoft.Json.Linq;
+using System.Reflection;
 
 namespace IndicoToolkit.Results;
 
 
 public static class Utils
 {
-    // Return the value of type `ValueType` obtained by traversing `json` using `keys`.
-    // Throw `ResultException` if a key doesn't exist or the value has the wrong type.
+    /*
+    Return the value of type `ValueType` obtained by traversing `json` using `keys`.
+    Throw `ResultException` if a key doesn't exist or the value has the wrong type.
+    */
     public static ValueType Get<ValueType>(JToken? json, params object[] keys)
     {
         foreach (var key in keys)
@@ -72,7 +75,9 @@ public static class Utils
         }
     }
 
-    // Check if `json` can be traversed using `keys` to a value of type `ValueType`.
+    /*
+    Check if `json` can be traversed using `keys` to a value of type `ValueType`.
+    */
     public static bool Has<ValueType>(JToken? json, params object[] keys)
     {
         foreach (var key in keys)
@@ -101,5 +106,52 @@ public static class Utils
         {
             return false;
         }
+    }
+
+    public static string PrettyPrint(Type type, object instance, params string[] propertyNames)
+    {
+        var properties = PrettyPrintProperties(type.GetProperties(), instance, propertyNames);
+        return $"{type.Name}(\n{properties}\n)";
+    }
+
+    private static string PrettyPrintProperties(PropertyInfo[] properties, object instance, params string[] propertyNames)
+    {
+        return "    " + string.Join(
+            ",\n",
+            properties
+                .Where(property => propertyNames.Contains(property.Name))
+                .Select(property => $"{property.Name} = {PrettyPrintProperty(property.GetValue(instance))}")
+        ).Replace("\n", "\n    ");
+    }
+
+    private static string PrettyPrintProperty(object instance)
+    {
+        if (instance == null)
+            return "null";
+        else if (instance is string)
+            return PrettyPrintStringProperty(instance as string);
+        else if (instance is IEnumerable<object>)
+            return PrettyPrintEnumerableProperty(instance as IEnumerable<object>);
+        else
+            return instance.ToString();
+    }
+
+    private static string PrettyPrintStringProperty(string instance)
+    {
+        return $"\"{instance
+                .Replace("\r", "\\r")
+                .Replace("\n", "\\n")
+                .Replace("\"", "\\\"")
+                .Replace("\\", "\\\\")}\"";
+    }
+
+    private static string PrettyPrintEnumerableProperty(IEnumerable<object> instance)
+    {
+        if (!instance.Any()) return "[]";
+        var items = string.Join(
+            ",\n",
+            instance.Select(item => $"    {item?.ToString().Replace("\n", "\n    ")}")
+        );
+        return $"[\n{items}\n]";
     }
 }

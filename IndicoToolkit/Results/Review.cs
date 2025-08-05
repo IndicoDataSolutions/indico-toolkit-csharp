@@ -14,7 +14,9 @@ public record Review
 {
     public int CompareTo(Review other) => this.Id.CompareTo(other.Id);
 
-    // Determine the review type from its string representation.
+    /*
+    Determine the review type from its string representation.
+    */
     public static ReviewType ReviewTypeFromString(string reviewType)
     {
         if (reviewType == "admin")
@@ -27,7 +29,9 @@ public record Review
             throw new ResultException($"unsupported review type `{reviewType}`");
     }
 
-    // Create a Review from a `reviews` list item.
+    /*
+    Create a Review from a `reviews` list item.
+    */
     public static Review FromJson(JToken json)
     {
         return new
@@ -37,6 +41,19 @@ public record Review
             Utils.Get<string>(json, "review_notes"),
             Utils.Get<bool>(json, "review_rejected"),
             Review.ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
+        );
+    }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Id",
+            "ReviewerId",
+            "Notes",
+            "Rejected",
+            "Type"
         );
     }
 };

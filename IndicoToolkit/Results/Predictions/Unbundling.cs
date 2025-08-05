@@ -10,7 +10,9 @@ public record Unbundling : Prediction
 
     public ImmutableList<int> Pages => Spans.Select(span => span.Page).ToImmutableList();
 
-    // Create an `Unbundling` from a prediction JSON.
+    /*
+    Create an `Unbundling` from a prediction JSON.
+    */
     public static new Unbundling FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         return new()
@@ -25,7 +27,9 @@ public record Unbundling : Prediction
         };
     }
 
-    // Create JSON for auto review changes.
+    /*
+    Create JSON for auto review changes.
+    */
     public override JObject ToJson()
     {
         Extras["label"] = Label;
@@ -33,5 +37,19 @@ public record Unbundling : Prediction
         Extras["spans"] = new JArray(Spans.Select(span => span.ToJson()));
 
         return Extras;
+    }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence",
+            "Spans"
+        );
     }
 }

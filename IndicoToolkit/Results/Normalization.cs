@@ -18,7 +18,7 @@ public static class Normalization
                 erroredFile["input_filename"] = match.Success ? match.Groups[1].Value : "";
             }
 
-            // Parse error out of traceback.
+            // Parse error from trackback for errored files.
             if (!Utils.Has<string>(erroredFile, "traceback"))
             {
                 var traceback = Utils.Get<string>(erroredFile, "error");
@@ -41,6 +41,7 @@ public static class Normalization
     public static void NormalizePredictionJson(TaskType taskType, JToken json)
     {
         // Predictions added in review lack a `confidence` section.
+        // (And should theoretically have 100% confidence.)
         if (!Utils.Has<JObject>(json, "confidence"))
         {
             json["confidence"] = new JObject { [Utils.Get<string>(json, "label")] = 1.0 };
@@ -50,8 +51,8 @@ public static class Normalization
         if (
             (
                 taskType == TaskType.DOCUMENT_EXTRACTION
-                || taskType == TaskType.GENAI_EXTRACTION
                 || taskType == TaskType.FORM_EXTRACTION
+                || taskType == TaskType.GENAI_EXTRACTION
             )
             && !Utils.Has<JObject>(json, "normalized")
         )

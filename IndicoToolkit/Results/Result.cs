@@ -21,7 +21,29 @@ public record Result
 
     public int CompareTo(Result other) => this.SubmissionId.CompareTo(other.SubmissionId);
 
-    // Create a `Result` from the root object of a result file.
+    /*
+    Load `resultUri` as a `Result` record. A `reader` function must be supplied to read
+    JSON from disk, storage API, or Indico client.
+    */
+    public static Result Load(string resultUri, Func<string, string> reader)
+    {
+        var resultJson = JObject.Parse(reader(resultUri));
+        return FromJson(resultJson);
+    }
+
+    /*
+    Load `resultUri` as a `Result` record. A `reader` coroutine must be supplied to read
+    JSON from disk, storage API, or Indico client.
+    */
+    public static async Task<Result> LoadAsync(string resultUri, Func<string, Task<string>> reader)
+    {
+        var resultJson = JObject.Parse(await reader(resultUri));
+        return FromJson(resultJson);
+    }
+
+    /*
+    Create a `Result` from the root object of a result file.
+    */
     public static Result FromJson(JObject json)
     {
         var fileVersion = Utils.Get<int>(json, "file_version");
@@ -65,36 +87,36 @@ public record Result
             var document = documents.Where(document => document.Id == documentId).First();
             var modelResultsJson = Utils.Get<JObject>(documentJson, "model_results");
             var componentResultsJson = Utils.Get<JObject>(documentJson, "component_results");
-            var originalJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL").Properties()
+            var originalResultsJson = Utils.Get<JObject>(modelResultsJson, "ORIGINAL").Properties()
                 .Concat(Utils.Get<JObject>(componentResultsJson, "ORIGINAL").Properties());
 
             // Parse original predictions (which don't have an associated review).
-            foreach (var taskJson in originalJson)
+            foreach (var taskJson in originalResultsJson)
             {
                 var taskId = int.Parse(taskJson.Name);
                 var task = tasks.Where(task => task.Id == taskId).First();
 
-                foreach (var predictionJson in taskJson.Value as JArray)
+                foreach (var taskPredictions in taskJson.Value as JArray)
                     predictions.Add(Prediction.FromJson(
-                        document, task, review: null, predictionJson
+                        document, task, review: null, taskPredictions
                     ));
             }
 
-            // Parse final predictions (which are associated with the most recent review).
+            // Parse final predictions (associated with the most recent review).
             if (reviews.Any())
             {
                 var review = reviews.Last();
-                var finalJson = Utils.Get<JObject>(modelResultsJson, "FINAL").Properties()
+                var finalResultsJson = Utils.Get<JObject>(modelResultsJson, "FINAL").Properties()
                     .Concat(Utils.Get<JObject>(componentResultsJson, "FINAL").Properties());
 
-                foreach (var taskJson in finalJson)
+                foreach (var taskJson in finalResultsJson)
                 {
                     var taskId = int.Parse(taskJson.Name);
                     var task = tasks.Where(task => task.Id == taskId).First();
 
-                    foreach (var predictionJson in taskJson.Value as JArray)
+                    foreach (var taskPredictions in taskJson.Value as JArray)
                         predictions.Add(Prediction.FromJson(
-                            document, task, review, predictionJson
+                            document, task, review, taskPredictions
                         ));
                 }
             }
@@ -107,6 +129,21 @@ public record Result
             tasks,
             reviews,
             predictions
+        );
+    }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "SubmissionId",
+            "SubmissionId",
+            "Documents",
+            "Tasks",
+            "Reviews",
+            "Predictions",
+            "Rejected"
         );
     }
 }

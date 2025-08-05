@@ -12,7 +12,9 @@ public record FormExtraction : Extraction
 
     public override int Page => Box.Page;
 
-    // Determine the form extraction type of a prediction from its string representation.
+    /*
+    Determine the form extraction type of a prediction from its string representation.
+    */
     public static FormExtractionType FormExtractionTypeFromString(string formExtractionType)
     {
         if (formExtractionType == "checkbox")
@@ -25,7 +27,9 @@ public record FormExtraction : Extraction
             throw new ResultException($"unsupported form extraction type `{formExtractionType}`");
     }
 
-    // Create a `FormExtraction` from a prediction JSON.
+    /*
+    Create a `FormExtraction` from a prediction JSON.
+    */
     public static new FormExtraction FromJson(Document document, Results.Tasks.Task task, Review? review, JToken json)
     {
         return new()
@@ -52,7 +56,9 @@ public record FormExtraction : Extraction
         };
     }
 
-    // Create JSON for auto review changes.
+    /*
+    Create JSON for auto review changes.
+    */
     public override JObject ToJson()
     {
         Extras["label"] = Label;
@@ -97,5 +103,25 @@ public record FormExtraction : Extraction
             Extras["rejected"] = true;
 
         return Extras;
+    }
+
+    public override string ToString()
+    {
+        return Utils.PrettyPrint(
+            GetType(),
+            this,
+            "Document",
+            "Task",
+            "Review",
+            "Label",
+            "Confidence",
+            "Text",
+            "Accepted",
+            "Rejected",
+            "Type",
+            "Box",
+            "Checked",
+            "Signed"
+        );
     }
 }
