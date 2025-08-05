@@ -19,6 +19,13 @@ public class EtlOutputTests
         return File.ReadAllText(filePath);
     }
 
+    public async Task<string> ReadUriAsync(string uri)
+    {
+        var storageFolderPath = uri.Split("/storage/submission/").Last();
+        var filePath = Path.Combine(SamplesFolder, storageFolderPath);
+        return File.ReadAllText(filePath);
+    }
+
     [Theory]
     [InlineData("4723/111922/110237/etl_output.json")]
     [InlineData("4724/111923/110238/etl_output.json")]
@@ -43,7 +50,7 @@ public class EtlOutputTests
     [InlineData("4725/111924/110239/etl_output.json")]
     public async Task TestSampleFilesAsync(string filename)
     {
-        var etlOutput = EtlOutput.Load(filename, reader: ReadUri);
+        var etlOutput = await EtlOutput.LoadAsync(filename, reader: ReadUriAsync);
         var pageCount = etlOutput.TextOnPage.Count;
         var charCount = etlOutput.Text.Length;
         var tokenCount = etlOutput.Tokens.Count;
@@ -79,7 +86,7 @@ public class EtlOutputTests
     [InlineData("4725/111924/110239/etl_output.json")]
     public async Task TestSampleFilesDisableValuesAsync(string filename)
     {
-        var etlOutput = EtlOutput.Load(filename, reader: ReadUri, text: false, tokens: false, tables: false);
+        var etlOutput = await EtlOutput.LoadAsync(filename, reader: ReadUriAsync, text: false, tokens: false, tables: false);
         var pageCount = etlOutput.TextOnPage.Count;
         var charCount = etlOutput.Text.Length;
         var tokenCount = etlOutput.Tokens.Count;
