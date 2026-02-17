@@ -27,6 +27,8 @@ public record Table
     {
         var page = Utils.Get<int>(json, "page_num");
         Utils.Get<JObject>(json, "position")["page_num"] = page;
+        var rowCount = Utils.Get<int>(json, "num_rows");
+        var columnCount = Utils.Get<int>(json, "num_columns");
 
         foreach (var docOffset in Utils.Get<JArray>(json, "doc_offsets"))
             docOffset["page_num"] = page;
@@ -40,15 +42,24 @@ public record Table
             .OrderBy(cell => cell.Range)
             .ToImmutableArray();
 
-        var rows = Enumerable.Range(0, Utils.Get<int>(json, "num_rows"))
-            .Select(row => cells
-                .Where(cell => cell.Range.Rows.Contains(row))
+        var cellsByRowCol = cells
+            .SelectMany(cell => cell.Range.Rows
+                .SelectMany(row => cell.Range.Columns
+                    .Select(column => (Row: row, Col: column, Cell: cell))))
+            .ToDictionary(
+                merged => (merged.Row, merged.Col),
+                merged => merged.Cell
+            );
+
+        var rows = Enumerable.Range(0, rowCount)
+            .Select(row => Enumerable.Range(0, columnCount)
+                .Select(col => cellsByRowCol[(row, col)])
                 .ToImmutableArray())
             .ToImmutableArray();
 
-        var columns = Enumerable.Range(0, Utils.Get<int>(json, "num_columns"))
-            .Select(column => cells
-                .Where(cell => cell.Range.Columns.Contains(column))
+        var columns = Enumerable.Range(0, columnCount)
+            .Select(col => Enumerable.Range(0, rowCount)
+                .Select(row => cellsByRowCol[(row, col)])
                 .ToImmutableArray())
             .ToImmutableArray();
 
