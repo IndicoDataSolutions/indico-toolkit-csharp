@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace IndicoToolkit.Results;
+namespace IndicoToolkit.EtlOutputs;
 
 
 public record Span
