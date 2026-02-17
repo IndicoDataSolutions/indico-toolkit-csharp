@@ -7,15 +7,25 @@ namespace IndicoToolkit.EtlOutputs;
 public record Table
 (
     Box Box,
+    ImmutableList<Span> Spans,
     ImmutableList<Cell> Cells,
     ImmutableList<ImmutableList<Cell>> Rows,
     ImmutableList<ImmutableList<Cell>> Columns
 )
 {
+    public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
+
     public static Table FromJson(JToken json)
     {
         var page = Utils.Get<int>(json, "page_num");
         Utils.Get<JObject>(json, "position")["page_num"] = page;
+
+        foreach (var docOffset in Utils.Get<JArray>(json, "doc_offsets"))
+            docOffset["page_num"] = page;
+
+        var spans = Utils.Get<JArray>(json, "doc_offsets")
+            .Select(Span.FromJson)
+            .ToImmutableList();
 
         var cells = Utils.Get<JArray>(json, "cells")
             .Select(cell => Cell.FromJson(cell, page))
@@ -37,6 +47,7 @@ public record Table
         return new
         (
             Box.FromJson(Utils.Get<JObject>(json, "position")),
+            spans,
             cells,
             rows,
             columns
@@ -48,8 +59,9 @@ public record Table
         return Utils.PrettyPrint(
             GetType(),
             this,
-            "Box",
-            "Cells"
+                "Box",
+                "Spans",
+                "Cells"
         );
     }
 }
