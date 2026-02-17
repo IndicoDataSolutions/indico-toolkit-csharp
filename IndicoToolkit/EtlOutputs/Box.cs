@@ -40,6 +40,30 @@ public record Box
             return 1;
     }
 
+    /*
+    Return a new `Box` for the overlap between `this` and `other`
+    or `NULL_BOX` if they don't overlap.
+    */
+    public Box Intersect(Box other)
+    {
+        if (
+            this.Page != other.Page
+            || this.Bottom <= other.Top  // `this` is above `other`
+            || this.Top >= other.Bottom  // `this` is below `other`
+            || this.Right <= other.Left  // `this` is to the left of `other`
+            || this.Left >= other.Right  // `this` is to the right of `other`
+        )
+            return NULL_BOX;
+        else
+            return this with
+            {
+                Top = Math.Max(this.Top, other.Top),
+                Left = Math.Max(this.Left, other.Left),
+                Right = Math.Min(this.Right, other.Right),
+                Bottom = Math.Min(this.Bottom, other.Bottom),
+            };
+    }
+
     public static Box FromJson(JToken json)
     {
         return new

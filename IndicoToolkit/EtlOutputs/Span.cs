@@ -22,6 +22,26 @@ public record Span
             return this.Page.CompareTo(other.Page);
     }
 
+    /*
+    Return a new `Span` for the overlap between `this` and `other`
+    or `NULL_SPAN` if they don't overlap.
+    */
+    public Span Intersect(Span other)
+    {
+        if (
+            this.Page != other.Page
+            || this.End <= other.Start  // `this` is to the left of `other`
+            || this.Start >= other.End  // `this` is to the right of `other`
+        )
+            return NULL_SPAN;
+        else
+            return this with
+            {
+                Start = Math.Max(this.Start, other.Start),
+                End = Math.Min(this.End, other.End),
+            };
+    }
+
     public static Span FromJson(JToken json)
     {
         return new
