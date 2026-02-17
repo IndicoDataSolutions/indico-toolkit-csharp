@@ -10,7 +10,7 @@ public record Cell
     string Text,
     Box Box,
     Range Range,
-    ImmutableList<Span> Spans
+    ImmutableArray<Span> Spans
 )
 {
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
@@ -48,7 +48,7 @@ public record Cell
             Range.FromJson(json),
             Utils.Get<JArray>(json, "doc_offsets")
                 .Select(Span.FromJson)
-                .ToImmutableList()
+                .ToImmutableArray()
         );
     }
 

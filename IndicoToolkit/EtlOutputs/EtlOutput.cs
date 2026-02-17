@@ -6,11 +6,11 @@ namespace IndicoToolkit.EtlOutputs;
 public record EtlOutput
 (
     string Text,
-    ImmutableList<string> TextOnPage,
-    ImmutableList<Token> Tokens,
-    ImmutableList<ImmutableList<Token>> TokensOnPage,
-    ImmutableList<Table> Tables,
-    ImmutableList<ImmutableList<Table>> TablesOnPage
+    ImmutableArray<string> TextOnPage,
+    ImmutableArray<Token> Tokens,
+    ImmutableArray<ImmutableArray<Token>> TokensOnPage,
+    ImmutableArray<Table> Tables,
+    ImmutableArray<ImmutableArray<Table>> TablesOnPage
 )
 {
     /*
@@ -37,17 +37,17 @@ public record EtlOutput
         if (text && Utils.Has<string>(pages, 0, "text"))
             textPages = pages.Select(page => reader(Utils.Get<string>(page, "text")));
         else
-            textPages = ImmutableList<string>.Empty;
+            textPages = ImmutableArray<string>.Empty;
 
         if (tokens && Utils.Has<string>(pages, 0, "tokens"))
             tokenJsonPages = pages.Select(page => JArray.Parse(reader(Utils.Get<string>(page, "tokens"))));
         else
-            tokenJsonPages = ImmutableList<JArray>.Empty;
+            tokenJsonPages = ImmutableArray<JArray>.Empty;
 
         if (tables && Utils.Has<string>(pages, 0, "tables"))
             tableJsonPages = pages.Select(page => JArray.Parse(reader(Utils.Get<string>(page, "tables"))));
         else
-            tableJsonPages = ImmutableList<JArray>.Empty;
+            tableJsonPages = ImmutableArray<JArray>.Empty;
 
         return FromPages(textPages, tokenJsonPages, tableJsonPages);
     }
@@ -98,22 +98,22 @@ public record EtlOutput
             .Select(page => page
                 .Select(Token.FromJson)
                 .OrderBy(token => token.Span)
-                .ToImmutableList())
-            .ToImmutableList();
+                .ToImmutableArray())
+            .ToImmutableArray();
 
         var tablePages = tableJsonPages
             .Select(page => page
                 .Select(Table.FromJson)
                 .OrderBy(table => table.Box)
-                .ToImmutableList())
-            .ToImmutableList();
+                .ToImmutableArray())
+            .ToImmutableArray();
 
         return new(
             string.Join("\n", textPages),
-            textPages.ToImmutableList(),
-            tokenPages.SelectMany(page => page).ToImmutableList(),
+            textPages.ToImmutableArray(),
+            tokenPages.SelectMany(page => page).ToImmutableArray(),
             tokenPages,
-            tablePages.SelectMany(page => page).ToImmutableList(),
+            tablePages.SelectMany(page => page).ToImmutableArray(),
             tablePages
         );
     }
@@ -124,7 +124,7 @@ public record EtlOutput
     */
     public Token TokenFor(Span span)
     {
-        ImmutableList<Token> tokens;
+        ImmutableArray<Token> tokens;
 
         try
         {
@@ -172,7 +172,7 @@ public record EtlOutput
 
         try
         {
-            var rowIndex = BisectLeft<ImmutableList<Cell>>(table.Rows, tokenMidV, key: row => row.First().Box.Bottom);
+            var rowIndex = BisectLeft<ImmutableArray<Cell>>(table.Rows, tokenMidV, key: row => row.First().Box.Bottom);
             var row = table.Rows[rowIndex];
 
             var cellIndex = BisectLeft<Cell>(row, tokenMidH, key: cell => cell.Box.Right);
@@ -186,9 +186,9 @@ public record EtlOutput
         }
     }
 
-    private static int BisectLeft<T>(ImmutableList<T> tokens, int search, Func<T, int> key, int low = 0)
+    private static int BisectLeft<T>(ImmutableArray<T> tokens, int search, Func<T, int> key, int low = 0)
     {
-        int high = tokens.Count;
+        int high = tokens.Length;
 
         while (low < high)
         {
@@ -203,10 +203,10 @@ public record EtlOutput
         return low;
     }
 
-    private static int BisectRight<T>(ImmutableList<T> tokens, int search, Func<T, int> key)
+    private static int BisectRight<T>(ImmutableArray<T> tokens, int search, Func<T, int> key)
     {
         int low = 0;
-        int high = tokens.Count;
+        int high = tokens.Length;
 
         while (low < high)
         {

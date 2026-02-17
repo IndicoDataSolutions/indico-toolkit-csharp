@@ -7,10 +7,10 @@ namespace IndicoToolkit.EtlOutputs;
 public record Table
 (
     Box Box,
-    ImmutableList<Span> Spans,
-    ImmutableList<Cell> Cells,
-    ImmutableList<ImmutableList<Cell>> Rows,
-    ImmutableList<ImmutableList<Cell>> Columns
+    ImmutableArray<Span> Spans,
+    ImmutableArray<Cell> Cells,
+    ImmutableArray<ImmutableArray<Cell>> Rows,
+    ImmutableArray<ImmutableArray<Cell>> Columns
 )
 {
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
@@ -33,24 +33,24 @@ public record Table
 
         var spans = Utils.Get<JArray>(json, "doc_offsets")
             .Select(Span.FromJson)
-            .ToImmutableList();
+            .ToImmutableArray();
 
         var cells = Utils.Get<JArray>(json, "cells")
             .Select(cell => Cell.FromJson(cell, page))
             .OrderBy(cell => cell.Range)
-            .ToImmutableList();
+            .ToImmutableArray();
 
         var rows = Enumerable.Range(0, Utils.Get<int>(json, "num_rows"))
             .Select(row => cells
                 .Where(cell => cell.Range.Rows.Contains(row))
-                .ToImmutableList())
-            .ToImmutableList();
+                .ToImmutableArray())
+            .ToImmutableArray();
 
         var columns = Enumerable.Range(0, Utils.Get<int>(json, "num_columns"))
             .Select(column => cells
                 .Where(cell => cell.Range.Columns.Contains(column))
-                .ToImmutableList())
-            .ToImmutableList();
+                .ToImmutableArray())
+            .ToImmutableArray();
 
         return new
         (
@@ -81,6 +81,6 @@ public record Table
     sort by the `Table` attribute without having to constantly check for `null`,
     while still allowing you do a "null check" with `Extraction.Table.IsNull`.
     */
-    public static readonly Table NULL_TABLE = new(Box.NULL_BOX, ImmutableList.Empty, ImmutableList.Empty, ImmutableList.Empty, ImmutableList.Empty);
+    public static readonly Table NULL_TABLE = new(Box.NULL_BOX, ImmutableArray.Empty, ImmutableArray.Empty, ImmutableArray.Empty, ImmutableArray.Empty);
     public bool IsNull => this == NULL_TABLE;
 }

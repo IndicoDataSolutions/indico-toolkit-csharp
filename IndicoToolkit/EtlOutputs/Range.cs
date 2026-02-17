@@ -10,8 +10,8 @@ public record Range
     int Column,
     int RowSpan,
     int ColumnSpan,
-    ImmutableList<int> Rows,
-    ImmutableList<int> Columns
+    ImmutableArray<int> Rows,
+    ImmutableArray<int> Columns
 ) : IComparable<Range>
 {
     public int CompareTo(Range other)
@@ -28,8 +28,8 @@ public record Range
 
     public static Range FromJson(JToken json)
     {
-        var rows = Utils.Get<ImmutableList<int>>(json, "rows");
-        var columns = Utils.Get<ImmutableList<int>>(json, "columns");
+        var rows = Utils.Get<ImmutableArray<int>>(json, "rows");
+        var columns = Utils.Get<ImmutableArray<int>>(json, "columns");
 
         return new
         (
@@ -62,6 +62,6 @@ public record Range
     `Range` property without having to constantly check for `null`, while still
     allowing you do a "null check" with `Cell.Range.IsNull`.
     */
-    public static readonly Range NULL_RANGE = new(0, 0, 0, 0, ImmutableList.Empty, ImmutableList.Empty);
+    public static readonly Range NULL_RANGE = new(0, 0, 0, 0, ImmutableArray.Empty, ImmutableArray.Empty);
     public bool IsNull => this == NULL_RANGE;
 }
