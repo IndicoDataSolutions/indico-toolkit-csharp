@@ -15,6 +15,14 @@ public record Cell
 {
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
 
+    /*
+    Uniquely identify cells by hashing their bounding box and spans.
+
+    This is small speedup for `.GroupBy(e => e.Cell)` compared to
+    the default GetHashCode implementation.
+    */
+    public override int GetHashCode() => HashCode.Combine(Box, Spans);
+
     public static CellType CellTypeFromString(string cellType)
     {
         if (cellType == "header")
@@ -52,9 +60,9 @@ public record Cell
                 GetType(),
                 this,
                 "Type",
-            "Text",
-            "Box",
-            "Range",
+                "Text",
+                "Box",
+                "Range",
                 "Spans"
             );
     }

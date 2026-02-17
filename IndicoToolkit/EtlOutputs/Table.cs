@@ -15,6 +15,14 @@ public record Table
 {
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
 
+    /*
+    Uniquely identify tables by hashing their bounding box and spans.
+
+    This is an order of magnitude speedup for `.GroupBy(e => e.Table)`
+    compared to the default GetHashCode implementation.
+    */
+    public override int GetHashCode() => HashCode.Combine(Box, Spans);
+
     public static Table FromJson(JToken json)
     {
         var page = Utils.Get<int>(json, "page_num");
