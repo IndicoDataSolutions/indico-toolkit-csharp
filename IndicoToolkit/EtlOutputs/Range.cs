@@ -44,13 +44,24 @@ public record Range
 
     public override string ToString()
     {
-        return Utils.PrettyPrint(
-            GetType(),
-            this,
-            "Row",
-            "Column",
-            "RowSpan",
-            "ColumnSpan"
-        );
+        return IsNull
+            ? "NULL_RANGE"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
+                "Row",
+                "Column",
+                "RowSpan",
+                "ColumnSpan"
+            );
     }
+
+    /*
+    It's more ergonomic to represent the lack of ranges with a special null range object
+    rather than using `null` or raising an error. This lets you e.g. sort by the
+    `Range` property without having to constantly check for `null`, while still
+    allowing you do a "null check" with `Cell.Range.IsNull`.
+    */
+    public static readonly Range NULL_RANGE = new(0, 0, 0, 0, ImmutableList.Empty, ImmutableList.Empty);
+    public bool IsNull => this == NULL_RANGE;
 }

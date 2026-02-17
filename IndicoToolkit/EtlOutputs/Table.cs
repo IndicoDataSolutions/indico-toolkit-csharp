@@ -56,12 +56,23 @@ public record Table
 
     public override string ToString()
     {
-        return Utils.PrettyPrint(
-            GetType(),
-            this,
+        return IsNull
+            ? "NULL_TABLE"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
                 "Box",
                 "Spans",
                 "Cells"
-        );
+            );
     }
+
+    /*
+    It's more ergonomic to represent the lack of tables with a special null table
+    object rather than using `null` or throwing an exception. This lets you e.g.
+    sort by the `Table` attribute without having to constantly check for `null`,
+    while still allowing you do a "null check" with `Extraction.Table.IsNull`.
+    */
+    public static readonly Table NULL_TABLE = new(Box.NULL_BOX, ImmutableList.Empty, ImmutableList.Empty, ImmutableList.Empty, ImmutableList.Empty);
+    public bool IsNull => this == NULL_TABLE;
 }
