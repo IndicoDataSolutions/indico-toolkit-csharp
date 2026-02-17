@@ -14,9 +14,11 @@ public record Range
     ImmutableArray<int> Columns
 ) : IComparable<Range>
 {
-    public int CompareTo(Range other)
+    public int CompareTo(Range? other)
     {
-        if (this.Row == other.Row && this.Column == other.Column && this.RowSpan == other.RowSpan)
+        if (other == null)
+            return 1;
+        else if (this.Row == other.Row && this.Column == other.Column && this.RowSpan == other.RowSpan)
             return this.ColumnSpan.CompareTo(other.ColumnSpan);
         else if (this.Row == other.Row && this.Column == other.Column)
             return this.RowSpan.CompareTo(other.RowSpan);

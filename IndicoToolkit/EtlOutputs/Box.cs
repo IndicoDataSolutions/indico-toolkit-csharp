@@ -12,7 +12,7 @@ public record Box
     int Bottom
 ) : IComparable<Box>
 {
-    public int CompareTo(Box other)
+    public int CompareTo(Box? other)
     {
         /*
         Bounding boxes are sorted with vertical hysteresis. Those on the same line are
@@ -28,7 +28,9 @@ public record Box
         │      3      │ └────────────────┘ │  5  │
         └─────────────┘                    └─────┘
         */
-        if (
+        if (other == null)
+            return 1;
+        else if (
             this.Page < other.Page
             || (this.Page == other.Page && this.Bottom < other.Top)
             || (this.Page == other.Page && this.Top < other.Bottom && this.Left < other.Left)

@@ -12,9 +12,11 @@ public record Span
 {
     public Range Range => Start..End;
 
-    public int CompareTo(Span other)
+    public int CompareTo(Span? other)
     {
-        if (this.Page == other.Page && this.Start == other.Start)
+        if (other == null)
+            return 1;
+        else if (this.Page == other.Page && this.Start == other.Start)
             return this.End.CompareTo(other.End);
         else if (this.Page == other.Page)
             return this.Start.CompareTo(other.Start);

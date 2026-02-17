@@ -25,7 +25,7 @@ public record Document
     ImmutableHashSet<string> ComponentIds
 ) : IComparable<Document>
 {
-    public int CompareTo(Document other) => this.Id.CompareTo(other.Id);
+    public int CompareTo(Document? other) => (other == null) ? 1 : this.Id.CompareTo(other.Id);
 
     /*
     Create a `Document` from a `submission_results` list item.
