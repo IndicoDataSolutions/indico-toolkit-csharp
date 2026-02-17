@@ -33,10 +33,10 @@ public record Range
 
         return new
         (
-            rows.First(),
-            columns.First(),
-            rows.Count,
-            columns.Count,
+            rows.Min(),
+            columns.Min(),
+            rows.Length,
+            columns.Length,
             rows,
             columns
         );
