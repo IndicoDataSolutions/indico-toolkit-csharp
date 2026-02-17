@@ -10,7 +10,7 @@ public record Span
     int End
 ) : IComparable<Span>
 {
-    public Range Range => Start..End;
+    public System.Range Range => Start..End;
 
     public int CompareTo(Span? other)
     {
