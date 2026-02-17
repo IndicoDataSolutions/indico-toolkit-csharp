@@ -62,6 +62,6 @@ public record Range
     `Range` property without having to constantly check for `null`, while still
     allowing you do a "null check" with `Cell.Range.IsNull`.
     */
-    public static readonly Range NULL_RANGE = new(0, 0, 0, 0, ImmutableArray.Empty, ImmutableArray.Empty);
+    public static readonly Range NULL_RANGE = new(0, 0, 0, 0, [], []);
     public bool IsNull => this == NULL_RANGE;
 }

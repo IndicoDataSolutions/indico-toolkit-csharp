@@ -73,6 +73,6 @@ public record Cell
     property without having to constantly check for `null`, while still allowing you do
     a "null check" with `Extraction.Cell.IsNull`.
     */
-    public static readonly Cell NULL_CELL = new(CellType.CONTENT, "", Box.NULL_BOX, Range.NULL_RANGE, ImmutableArray.Empty);
+    public static readonly Cell NULL_CELL = new(CellType.CONTENT, "", Box.NULL_BOX, Range.NULL_RANGE, []);
     public bool IsNull => this == NULL_CELL;
 }

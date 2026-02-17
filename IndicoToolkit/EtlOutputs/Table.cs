@@ -81,6 +81,6 @@ public record Table
     sort by the `Table` attribute without having to constantly check for `null`,
     while still allowing you do a "null check" with `Extraction.Table.IsNull`.
     */
-    public static readonly Table NULL_TABLE = new(Box.NULL_BOX, ImmutableArray.Empty, ImmutableArray.Empty, ImmutableArray.Empty, ImmutableArray.Empty);
+    public static readonly Table NULL_TABLE = new(Box.NULL_BOX, [], [], [], []);
     public bool IsNull => this == NULL_TABLE;
 }
