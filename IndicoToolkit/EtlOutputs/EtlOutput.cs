@@ -14,6 +14,30 @@ public record EtlOutput
 )
 {
     /*
+    Lazily compute & memoize table cells sorted by span on each page.
+    */
+    private ImmutableArray<ImmutableArray<(Table Table, Cell Cell, Span Span)>> _TableCellSpansOnPage;
+    private ImmutableArray<ImmutableArray<(Table Table, Cell Cell, Span Span)>> TableCellSpansOnPage
+    {
+        get
+        {
+            if (_TableCellSpansOnPage.IsDefaultOrEmpty)
+            {
+                _TableCellSpansOnPage = TablesOnPage
+                    .Select(page => page
+                        .SelectMany(table => table.Cells
+                            .SelectMany(cell => cell.Spans
+                                .Where(span => !span.IsNull)
+                                .Select(span => (Table: table, Cell: cell, Span: span))))
+                        .OrderBy(tuple => tuple.Span)
+                        .ToImmutableArray())
+                    .ToImmutableArray();
+            }
+            return _TableCellSpansOnPage;
+        }
+    }
+
+    /*
     Load `etlOutputUri` as an `EtlOutput` record. A `reader` function must be
     supplied to read JSON and text strings from disk, storage API, or Indico client.
 
@@ -153,38 +177,29 @@ public record EtlOutput
     }
 
     /*
-    Return the `Table` and `Cell` that contain the midpoint of `token`.
-    Throws `TableCellNotFoundException` if it's not inside a table cell.
+    Yield the table cells that overlap with `span`.
+
+    Note: a single span may overlap the same cell multiple times causing it to be
+    yielded multiple times. Deduplication in `DocumentExtraction.TableCells`
+    accounts for this when OCR is assigned with `PredictionList.AssignOcr()`.
     */
-    public (Table, Cell) TableCellFor(Token token)
+    public IEnumerable<(Table Table, Cell Cell)> TableCellsFor(Span span)
     {
-        var tokenMidV = (token.Box.Top + token.Box.Bottom) / 2;
-        var tokenMidH = (token.Box.Left + token.Box.Right) / 2;
-
-        var table = TablesOnPage[token.Box.Page]
-            .Where(table => (
-                (table.Box.Top <= tokenMidV && tokenMidV <= table.Box.Bottom) &&
-                (table.Box.Left <= tokenMidH && tokenMidH <= table.Box.Right)
-            ))
-            .FirstOrDefault();
-
-        if (table == null)
-            throw new TableCellNotFoundException($"no table contains {token}");
-
+        ImmutableArray<(Table Table, Cell Cell, Span Span)> tableCellSpans;
         try
         {
-            var rowIndex = BisectLeft<ImmutableArray<Cell>>(table.Rows, tokenMidV, key: row => row.First().Box.Bottom);
-            var row = table.Rows[rowIndex];
-
-            var cellIndex = BisectLeft<Cell>(row, tokenMidH, key: cell => cell.Box.Right);
-            var cell = row[cellIndex];
-
-            return (table, cell);
+            var pageTableCellSpans = TableCellSpansOnPage[span.Page];
+            var first = BisectRight(pageTableCellSpans, span.Start, key: tuple => tuple.Span.End);
+            var last = BisectLeft(pageTableCellSpans, span.End, key: tuple => tuple.Span.Start, low: first);
+            tableCellSpans = pageTableCellSpans[first..last];
         }
         catch
         {
-            throw new TableCellNotFoundException($"no cell contains {token}");
+            tableCellSpans = ImmutableArray<(Table Table, Cell Cell, Span Span)>.Empty;
         }
+
+        foreach (var (table, cell, _) in tableCellSpans)
+            yield return (Table: table, Cell: cell);
     }
 
     private static int BisectLeft<T>(ImmutableArray<T> tokens, int search, Func<T, int> key, int low = 0)
