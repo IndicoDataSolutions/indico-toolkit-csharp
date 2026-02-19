@@ -119,8 +119,8 @@ public record EtlOutput
     }
 
     /*
-    Return a `Token` that contains every character from `span`.
-    Throws `TokenNotFoundException` if one can't be produced.
+    Return a `Token` that contains every character from `span`
+    or `NULL_TOKEN` if one doesn't exist.
     */
     public Token TokenFor(Span span)
     {
@@ -131,11 +131,12 @@ public record EtlOutput
             tokens = TokensOnPage[span.Page];
             var first = BisectRight<Token>(tokens, span.Start, key: token => token.Span.End);
             var last = BisectLeft<Token>(tokens, span.End, key: token => token.Span.Start, low: first);
-            tokens = tokens.GetRange(first, last - first);
+            tokens = tokens[first..last];
+            tokens.First();  // Raise an exception if there are no tokens.
         }
         catch
         {
-            throw new TokenNotFoundException($"no token contains {span}");
+            return Token.NULL_TOKEN;
         }
 
         return new Token(
