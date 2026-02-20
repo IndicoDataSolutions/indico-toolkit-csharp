@@ -11,7 +11,7 @@ public record Citation
     Span Span
 ) : IComparable<Citation>
 {
-    public Range Range => Start..End;
+    public System.Range Range => Start..End;
 
     public int CompareTo(Citation other)
     {
