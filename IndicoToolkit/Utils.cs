@@ -1,14 +1,14 @@
 using Newtonsoft.Json.Linq;
 using System.Reflection;
 
-namespace IndicoToolkit.Results;
+namespace IndicoToolkit;
 
 
 public static class Utils
 {
     /*
     Return the value of type `ValueType` obtained by traversing `json` using `keys`.
-    Throw `ResultException` if a key doesn't exist or the value has the wrong type.
+    Throw `TraversalException` if a key doesn't exist or the value has the wrong type.
     */
     public static ValueType Get<ValueType>(JToken? json, params object[] keys)
     {
@@ -23,7 +23,7 @@ public static class Utils
                 else
                 {
                     var properties = jsonObject.Properties().Select(property => property.Name);
-                    throw new ResultException(
+                    throw new TraversalException(
                         $"key '{key}' not in object keys ('{string.Join("', '", properties)}')"
                     );
                 }
@@ -35,18 +35,18 @@ public static class Utils
                     if (0 <= keyInteger && keyInteger < jsonArray.Count)
                         json = jsonArray[keyInteger];
                     else
-                        throw new ResultException(
+                        throw new TraversalException(
                             $"index {keyInteger} out of range [0,{jsonArray.Count})"
                         );
                 }
                 else
                 {
-                    throw new ResultException($"array can't be indexed with `{key}`");
+                    throw new TraversalException($"array can't be indexed with `{key}`");
                 }
             }
             else
             {
-                throw new ResultException($"{json?.GetType()} can't be traversed");
+                throw new TraversalException($"{json?.GetType()} can't be traversed");
             }
         }
 
@@ -63,13 +63,13 @@ public static class Utils
 
             // Guarantee the returned value isn't null.
             if (value == null)
-                throw new ResultException("value is null");
+                throw new TraversalException("value is null");
 
             return value;
         }
         catch
         {
-            throw new ResultException(
+            throw new TraversalException(
                 $"value `{json}` doesn't have type {typeof(ValueType)}"
             );
         }
