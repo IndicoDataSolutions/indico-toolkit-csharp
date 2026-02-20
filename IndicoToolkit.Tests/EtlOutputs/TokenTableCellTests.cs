@@ -1,60 +1,55 @@
 using IndicoToolkit.EtlOutputs;
-using IndicoToolkit.Results;
 using Xunit;
 
-namespace IndicoToolkit.Tests;
+namespace IndicoToolkit.Tests.EtlOutputs;
 
 
 public class TokenTableCellTests
 {
-    // The base directory will be IndicoToolkit.Tests/bin/Debug/net8.0/
-    private static string SamplesFolder = Path.Combine(
+    // The base directory will be IndicoToolkit.Tests/bin/Debug/net*/
+    private static readonly string SamplesFolder = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory,
         "..", "..", "..", "EtlOutputs", "Samples"
     );
-    private static string EtlOutputFile = Path.Combine(
+    private static readonly string EtlOutputFile = Path.Combine(
         SamplesFolder,
         "4725", "111924", "110239", "etl_output.json"
     );
 
-    public string ReadUri(string uri)
+    public static string ReadUri(string uri)
     {
         var storageFolderPath = uri.Split("/storage/submission/").Last();
         var filePath = Path.Combine(SamplesFolder, storageFolderPath);
         return File.ReadAllText(filePath);
     }
 
-    public Span HeaderSpan()
-    {
-        return new Span(1, 1281, 1285);
-    }
-
-    public Span ContentSpan()
-    {
-        return new Span(1, 1343, 1349);
-    }
+    public static Span HeaderSpan => new(1, 1281, 1285);
+    public static Span ContentSpan => new(1, 1343, 1349);
+    public static Span LineItemSpan => new(1, 1311, 1244);
+    public static Span MultipleTableSpan => new(1, 1217, 1299);
+    public static Span OutsideTableSpan => new(1, 1056, 1067);
 
     [Fact]
     public void TestTextSlice()
     {
         var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
 
-        Assert.Equal(etlOutput.Text[HeaderSpan().Range], "COST");
-        Assert.Equal(etlOutput.Text[ContentSpan().Range], "720.00");
+        Assert.Equal("COST", etlOutput.Text[HeaderSpan.Range]);
+        Assert.Equal("720.00", etlOutput.Text[ContentSpan.Range]);
     }
 
     [Fact]
     public void TestToken()
     {
         var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
-        var headerToken = etlOutput.TokenFor(HeaderSpan());
-        var contentToken = etlOutput.TokenFor(ContentSpan());
+        var headerToken = etlOutput.TokenFor(HeaderSpan);
+        var contentToken = etlOutput.TokenFor(ContentSpan);
 
-        Assert.Equal(headerToken.Span, HeaderSpan());
-        Assert.Equal(contentToken.Span, ContentSpan());
+        Assert.Equal(HeaderSpan, headerToken.Span);
+        Assert.Equal(ContentSpan, contentToken.Span);
 
-        Assert.Equal(headerToken.Text, "COST");
-        Assert.Equal(contentToken.Text, "720.00");
+        Assert.Equal("COST", headerToken.Text);
+        Assert.Equal("720.00", contentToken.Text);
     }
 
     [Fact]
@@ -62,9 +57,17 @@ public class TokenTableCellTests
     {
         var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
 
-        Assert.Throws<TokenNotFoundException>(
-            () => etlOutput.TokenFor(HeaderSpan() with { Page = 3 })
-        );
+        Assert.Equal(Token.NULL_TOKEN, etlOutput.TokenFor(HeaderSpan with { Page = 3 }));
+        Assert.True(etlOutput.TokenFor(Span.NULL_SPAN).IsNull);
+    }
+
+    [Fact]
+    public void TestNoTokens()
+    {
+        var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri, tokens: false);
+
+        Assert.Equal(Token.NULL_TOKEN, etlOutput.TokenFor(HeaderSpan));
+        Assert.True(etlOutput.TokenFor(HeaderSpan).IsNull);
     }
 
     [Fact]
@@ -72,20 +75,48 @@ public class TokenTableCellTests
     {
         var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
 
-        var headerToken = etlOutput.TokenFor(HeaderSpan());
-        var contentToken = etlOutput.TokenFor(ContentSpan());
+        var (headerTable, headerCell) = etlOutput.TableCellsFor(HeaderSpan).First();
+        var (contentTable, contentCell) = etlOutput.TableCellsFor(ContentSpan).First();
 
-        var (headerTable, headerCell) = etlOutput.TableCellFor(headerToken);
-        var (contentTable, contentCell) = etlOutput.TableCellFor(contentToken);
+        Assert.Equal(HeaderSpan, headerCell.Span);
+        Assert.Equal(ContentSpan, contentCell.Span);
 
-        Assert.Equal(headerCell.Span, HeaderSpan());
-        Assert.Equal(contentCell.Span, ContentSpan());
+        Assert.Equal(CellType.HEADER, headerCell.Type);
+        Assert.Equal(CellType.CONTENT, contentCell.Type);
 
-        Assert.Equal(headerCell.Type, CellType.HEADER);
-        Assert.Equal(contentCell.Type, CellType.CONTENT);
+        Assert.Equal("COST", headerCell.Text);
+        Assert.Equal("720.00", contentCell.Text);
+    }
 
-        Assert.Equal(headerCell.Text, "COST");
-        Assert.Equal(contentCell.Text, "720.00");
+    [Fact]
+    public void TestTableCells()
+    {
+        var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
+
+        var tableCells = etlOutput.TableCellsFor(LineItemSpan);
+        var correctTable = etlOutput.Tables[3];
+        var correctRow = correctTable.Rows[1];
+        var correctCells = correctRow[1..4];
+
+        foreach (var ((table, cell), correctCell) in tableCells.Zip(correctCells))
+        {
+            Assert.Equal(correctTable, table);
+            Assert.Equal(correctCell, cell);
+        }
+    }
+
+    [Fact]
+    public void TestMultipleTables()
+    {
+        var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
+
+        var tableCells = etlOutput.TableCellsFor(MultipleTableSpan);
+        var cells = tableCells.Select(tableCell => tableCell.Cell);
+
+        var correctRows = etlOutput.Tables[2].Rows.Last().Concat(etlOutput.Tables[3].Rows.First());
+        var correctCells = correctRows.Where(cell => cell.Text != "");
+
+        Assert.Equal(correctCells, cells);
     }
 
     [Fact]
@@ -93,10 +124,18 @@ public class TokenTableCellTests
     {
         var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri);
 
-        Assert.Throws<TableCellNotFoundException>(() => {
-            var token = etlOutput.TokenFor(new Span(0, 0, 8));
-            etlOutput.TableCellFor(token);
-        });
+        Assert.False(etlOutput.TableCellsFor(OutsideTableSpan).Any());
+        Assert.False(etlOutput.TableCellsFor(Span.NULL_SPAN).Any());
+        Assert.False(etlOutput.TableCellsFor(new Span(-1, -1, -1)).Any());
+    }
+
+    [Fact]
+    public void TestNoTables()
+    {
+        var etlOutput = EtlOutput.Load(EtlOutputFile, reader: ReadUri, tokens: false, tables: false);
+
+        Assert.False(etlOutput.TableCellsFor(HeaderSpan).Any());
+        Assert.False(etlOutput.TableCellsFor(Span.NULL_SPAN).Any());
     }
 
     [Fact]
@@ -108,8 +147,8 @@ public class TokenTableCellTests
         var filledCell = table.Rows[1][2];
         var emptyCell = table.Rows[1][3];
 
-        Assert.NotEqual(filledCell.Text, "");
-        Assert.Equal(emptyCell.Text, "");
+        Assert.NotEqual("", filledCell.Text);
+        Assert.Equal("", emptyCell.Text);
 
         Assert.False(filledCell.Span.IsNull);
         Assert.True(emptyCell.Span.IsNull);
