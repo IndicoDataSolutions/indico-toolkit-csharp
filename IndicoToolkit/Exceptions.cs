@@ -17,3 +17,13 @@ public class TraversalException : IndicoToolkitException
 {
     public TraversalException(string message) : base(message) { }
 }
+
+
+/*
+Thrown when an error occurs loading a result file.
+E.g. an unsupported result file version.
+*/
+public class ResultException : IndicoToolkitException
+{
+    public ResultException(string message) : base(message) { }
+}
