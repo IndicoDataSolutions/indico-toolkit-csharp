@@ -6,13 +6,13 @@ namespace IndicoToolkit.Results;
 
 public abstract record Prediction
 {
-    public Document Document { get; set; }
-    public Results.Tasks.Task Task { get; set; }
+    public required Document Document { get; set; }
+    public required Results.Tasks.Task Task { get; set; }
     public Review? Review { get; set; }  // Pre-review predictions do not have an associated Review.
 
-    public string Label { get; set; }
-    public Dictionary<string, double> Confidences { get; set; }
-    public JObject Extras { get; set; }
+    public required string Label { get; set; }
+    public required Dictionary<string, double> Confidences { get; set; }
+    public required JObject Extras { get; set; }
 
     public double Confidence
     {

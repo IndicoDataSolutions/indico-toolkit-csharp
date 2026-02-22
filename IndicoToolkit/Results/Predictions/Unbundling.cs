@@ -7,7 +7,7 @@ namespace IndicoToolkit.Results;
 
 public record Unbundling : Prediction
 {
-    public List<Span> Spans { get; set; }
+    public required List<Span> Spans { get; set; }
 
     public ImmutableList<int> Pages => Spans.Select(span => span.Page).ToImmutableList();
 

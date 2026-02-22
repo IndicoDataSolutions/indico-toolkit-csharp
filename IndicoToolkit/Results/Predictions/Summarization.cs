@@ -7,7 +7,7 @@ namespace IndicoToolkit.Results;
 
 public record Summarization : Extraction
 {
-    public List<Citation> Citations { get; set; }
+    public required List<Citation> Citations { get; set; }
 
     public Citation Citation
     {

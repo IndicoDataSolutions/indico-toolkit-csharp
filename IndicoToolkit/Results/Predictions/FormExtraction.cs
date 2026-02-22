@@ -6,8 +6,8 @@ namespace IndicoToolkit.Results;
 
 public record FormExtraction : Extraction
 {
-    public FormExtractionType Type { get; set; }
-    public Box Box { get; set; }
+    public required FormExtractionType Type { get; set; }
+    public required Box Box { get; set; }
     public bool Checked { get; set; }
     public bool Signed { get; set; }
 

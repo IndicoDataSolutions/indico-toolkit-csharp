@@ -6,8 +6,8 @@ namespace IndicoToolkit.Results;
 
 public record DocumentExtraction : Extraction
 {
-    public HashSet<Group> Groups { get; set; }
-    public List<Span> Spans { get; set; }
+    public required HashSet<Group> Groups { get; set; }
+    public required List<Span> Spans { get; set; }
 
     public Span Span
     {
