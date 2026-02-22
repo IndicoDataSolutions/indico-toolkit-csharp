@@ -34,7 +34,7 @@ public record DocumentExtraction : Extraction
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
             Groups = Utils.Get<JArray>(json, "groupings").Select(Group.FromJson).ToHashSet(),
             Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).Order().ToList(),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 

@@ -97,7 +97,7 @@ public record Result
                 var taskId = int.Parse(taskJson.Name);
                 var task = tasks.Where(task => task.Id == taskId).First();
 
-                foreach (var taskPredictions in taskJson.Value as JArray)
+                foreach (var taskPredictions in (JArray)taskJson.Value)
                     predictions.Add(Prediction.FromJson(
                         document, task, review: null, taskPredictions
                     ));
@@ -115,7 +115,7 @@ public record Result
                     var taskId = int.Parse(taskJson.Name);
                     var task = tasks.Where(task => task.Id == taskId).First();
 
-                    foreach (var taskPredictions in taskJson.Value as JArray)
+                    foreach (var taskPredictions in (JArray)taskJson.Value)
                         predictions.Add(Prediction.FromJson(
                             document, task, review, taskPredictions
                         ));

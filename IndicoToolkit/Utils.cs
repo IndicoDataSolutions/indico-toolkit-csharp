@@ -129,9 +129,9 @@ public static class Utils
         if (instance == null)
             return "null";
         else if (instance is string)
-            return PrettyPrintStringProperty(instance as string);
+            return PrettyPrintStringProperty((string)instance);
         else if (instance is IEnumerable<object>)
-            return PrettyPrintEnumerableProperty(instance as IEnumerable<object>);
+            return PrettyPrintEnumerableProperty((IEnumerable<object>)instance);
         else
             return instance.ToString();
     }

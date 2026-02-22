@@ -41,7 +41,7 @@ public record Summarization : Extraction
             Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
             Citations = Utils.Get<JArray>(json, "citations").Select(Citation.FromJson).Order().ToList(),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 

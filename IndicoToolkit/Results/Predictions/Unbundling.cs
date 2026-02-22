@@ -24,7 +24,7 @@ public record Unbundling : Prediction
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
             Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).ToList(),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 

@@ -53,7 +53,7 @@ public record FormExtraction : Extraction
                 Utils.Has<bool>(json, "normalized", "structured", "signed")
                 && Utils.Get<bool>(json, "normalized", "structured", "signed")
             ),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 

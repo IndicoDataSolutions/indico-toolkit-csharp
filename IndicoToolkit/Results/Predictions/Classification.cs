@@ -17,7 +17,7 @@ public record Classification : Prediction
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 
