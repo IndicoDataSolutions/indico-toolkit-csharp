@@ -19,7 +19,7 @@ public record Result
     public PredictionList<Prediction> AdminReview => Predictions.Where(reviewType: ReviewType.ADMIN);
     public PredictionList<Prediction> Final => Predictions.Where(pred => pred.Review == (Reviews.Any() ? Reviews.Last() : null));
 
-    public int CompareTo(Result other) => this.SubmissionId.CompareTo(other.SubmissionId);
+    public int CompareTo(Result? other) => (other == null) ? 1 : this.SubmissionId.CompareTo(other.SubmissionId);
 
     /*
     Load `resultUri` as a `Result` record. A `reader` function must be supplied to read

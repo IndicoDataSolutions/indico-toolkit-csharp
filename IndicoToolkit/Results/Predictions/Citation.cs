@@ -13,9 +13,11 @@ public record Citation
 {
     public System.Range Range => Start..End;
 
-    public int CompareTo(Citation other)
+    public int CompareTo(Citation? other)
     {
-        if (this.Start == other.Start && this.End == other.End)
+        if (other == null)
+            return 1;
+        else if (this.Start == other.Start && this.End == other.End)
             return this.Span.CompareTo(other.Span);
         else if (this.Start == other.Start)
             return this.End.CompareTo(other.End);

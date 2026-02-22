@@ -10,9 +10,10 @@ public record Group
     int Index
 ) : IComparable<Group>
 {
-    public int CompareTo(Group other) => this.Id == other.Id
-        ? this.Index.CompareTo(other.Index)
-        : this.Id.CompareTo(other.Id);
+    public int CompareTo(Group? other) => (other == null) ? 1 :
+        (this.Id == other.Id && this.Name == other.Name) ? this.Index.CompareTo(other.Index) :
+        (this.Id == other.Id) ? this.Name.CompareTo(other.Name) :
+        this.Id.CompareTo(other.Id);
 
     public Group Next() => this with { Index = Index + 1 };
 

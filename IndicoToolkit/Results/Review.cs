@@ -12,7 +12,7 @@ public record Review
     ReviewType Type
 ) : IComparable<Review>
 {
-    public int CompareTo(Review other) => this.Id.CompareTo(other.Id);
+    public int CompareTo(Review? other) => (other == null) ? 1 : this.Id.CompareTo(other.Id);
 
     /*
     Determine the review type from its string representation.
