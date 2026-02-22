@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System.Collections.Immutable;
 
 namespace IndicoToolkit.Results;
 
@@ -6,9 +7,9 @@ namespace IndicoToolkit.Results;
 public record Result
 (
     int SubmissionId,
-    List<Document> Documents,
-    List<Results.Tasks.Task> Tasks,
-    List<Review> Reviews,
+    ImmutableArray<Document> Documents,
+    ImmutableArray<Results.Tasks.Task> Tasks,
+    ImmutableArray<Review> Reviews,
     PredictionList<Prediction> Predictions
 ) : IComparable<Result>
 {
@@ -67,17 +68,17 @@ public record Result
         var documents = submissionResults.Select(Document.FromJson)
             .Concat(erroredFiles.PropertyValues().Select(Document.FromErroredFileJson))
             .Order()
-            .ToList();
+            .ToImmutableArray();
         var tasks = modelgroupMetadata.PropertyValues()
             .Concat(staticModelComponents)
             .Select(Results.Tasks.Task.FromJson)
             .Order()
-            .ToList();
+            .ToImmutableArray();
         var reviews = reviewMetadata
             .PropertyValues()
             .Select(Review.FromJson)
             .Order()
-            .ToList();
+            .ToImmutableArray();
 
         var predictions = new PredictionList<Prediction>();
 
