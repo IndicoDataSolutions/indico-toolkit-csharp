@@ -23,7 +23,7 @@ public record Unbundling : Prediction
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
-            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).ToList(),
+            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).Order().ToList(),
             Extras = (JObject)json,
         };
     }
