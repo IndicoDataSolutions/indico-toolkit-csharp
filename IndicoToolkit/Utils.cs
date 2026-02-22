@@ -124,7 +124,7 @@ public static class Utils
         ).Replace("\n", "\n    ");
     }
 
-    private static string PrettyPrintProperty(object instance)
+    private static string PrettyPrintProperty(object? instance)
     {
         if (instance == null)
             return "null";
@@ -133,7 +133,7 @@ public static class Utils
         else if (instance is IEnumerable<object>)
             return PrettyPrintEnumerableProperty((IEnumerable<object>)instance);
         else
-            return instance.ToString();
+            return instance?.ToString() ?? "";
     }
 
     private static string PrettyPrintStringProperty(string instance)
@@ -150,7 +150,7 @@ public static class Utils
         if (!instance.Any()) return "[]";
         var items = string.Join(
             ",\n",
-            instance.Select(item => $"    {item?.ToString().Replace("\n", "\n    ")}")
+            instance.Select(item => $"    {item?.ToString()?.Replace("\n", "\n    ") ?? "null"}")
         );
         return $"[\n{items}\n]";
     }

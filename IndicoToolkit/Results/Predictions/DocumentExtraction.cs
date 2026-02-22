@@ -50,8 +50,9 @@ public record DocumentExtraction : Extraction
 
         if (Text != Utils.Get<string>(Extras, "normalized", "formatted"))
         {
-            Extras["normalized"]["formatted"] = Text;
-            Extras["normalized"]["text"] = Text;
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
+            normalized["formatted"] = Text;
+            normalized["text"] = Text;
             Extras["text"] = Text;
         }
 

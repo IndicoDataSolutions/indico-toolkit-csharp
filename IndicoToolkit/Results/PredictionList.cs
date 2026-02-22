@@ -176,7 +176,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             predicates.Add(pred => pred.Review == review);
 
         if (reviewIn != null)
-            predicates.Add(pred => reviewIn.Contains(pred.Review));
+            predicates.Add(pred => pred.Review != null && reviewIn.Contains(pred.Review));
 
         if (reviewType != null)
             predicates.Add(pred => pred.Review != null && pred.Review.Type == reviewType);

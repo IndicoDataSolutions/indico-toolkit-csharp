@@ -73,19 +73,21 @@ public record FormExtraction : Extraction
 
         if (Type == FormExtractionType.CHECKBOX)
         {
-            Extras["normalized"]["structured"] = new JObject { ["checked"] = Checked };
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
+            normalized["structured"] = new JObject { ["checked"] = Checked };
             var text = Checked ? "Checked" : "Unchecked";
-            Extras["normalized"]["formatted"] = text;
-            Extras["normalized"]["text"] = text;
+            normalized["formatted"] = text;
+            normalized["text"] = text;
             Extras["text"] = text;
         }
         else if (Type == FormExtractionType.SIGNATURE)
         {
-            Extras["normalized"]["structured"] = new JObject { ["signed"] = Signed };
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
             var text = Signed ? "Signed" : "Unsigned";
-            Extras["normalized"]["formatted"] = text;
+            normalized["structured"] = new JObject { ["signed"] = Signed };
+            normalized["formatted"] = text;
             // Don't overwrite the text of the signature stored in these attributes.
-            // Extras["normalized"]["text"] = text;
+            // normalized["text"] = text;
             // Extras["text"] = text;
         }
         else if (
@@ -93,8 +95,9 @@ public record FormExtraction : Extraction
             && Text != Utils.Get<string>(Extras, "normalized", "formatted")
         )
         {
-            Extras["normalized"]["formatted"] = Text;
-            Extras["normalized"]["text"] = Text;
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
+            normalized["formatted"] = Text;
+            normalized["text"] = Text;
             Extras["text"] = Text;
         }
 
