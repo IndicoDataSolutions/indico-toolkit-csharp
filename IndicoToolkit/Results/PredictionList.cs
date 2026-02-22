@@ -39,7 +39,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             KeyType groupKey = key(prediction);
 
             if (!groupedPredictions.ContainsKey(groupKey))
-                groupedPredictions[groupKey] = new PredictionList<PredictionType>();
+                groupedPredictions[groupKey] = new();
 
             groupedPredictions[groupKey].Add(prediction);
         }
@@ -61,7 +61,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             foreach (var groupKey in keys(prediction))
             {
                 if (!groupedPredictions.ContainsKey(groupKey))
-                    groupedPredictions[groupKey] = new PredictionList<PredictionType>();
+                    groupedPredictions[groupKey] = new();
 
                 groupedPredictions[groupKey].Add(prediction);
             }
@@ -75,7 +75,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     */
     public PredictionList<Subtype> OfType<Subtype>() where Subtype : Prediction
     {
-        return new PredictionList<Subtype>(Enumerable.OfType<Subtype>(this));
+        return new(Enumerable.OfType<Subtype>(this));
     }
 
     /*
@@ -84,9 +84,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList<PredictionType> OrderBy(Func<PredictionType, IComparable> key, bool reverse = false)
     {
         if (reverse)
-            return new PredictionList<PredictionType>(this.OrderByDescending(key));
+            return new(this.OrderByDescending(key));
         else
-            return new PredictionList<PredictionType>(Enumerable.OrderBy(this, key));
+            return new(Enumerable.OrderBy(this, key));
     }
 
     /*
@@ -143,7 +143,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         bool? signed = null
     )
     {
-        List<Func<PredictionType, bool>> predicates = new List<Func<PredictionType, bool>>();
+        List<Func<PredictionType, bool>> predicates = new();
 
         if (predicate != null)
             predicates.Add(predicate);
@@ -230,7 +230,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
                 && (pred as FormExtraction).Signed == signed
             );
 
-        return new PredictionList<PredictionType>(
+        return new(
             Enumerable.Where(
                 this,
                 prediction => predicates.All(predicate => predicate(prediction))

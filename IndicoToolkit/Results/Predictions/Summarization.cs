@@ -12,7 +12,7 @@ public record Summarization : Extraction
     public Citation Citation
     {
         get => Citations.FirstOrDefault(Citation.NULL_CITATION);
-        set => Citations = value.IsNull ? new List<Citation>() : new List<Citation> { value };
+        set => Citations = value.IsNull ? new() : new() { value };
     }
 
     public ImmutableList<Span> Spans => Citations.Select(citation => citation.Span).ToImmutableList();

@@ -12,7 +12,7 @@ public record DocumentExtraction : Extraction
     public Span Span
     {
         get => Spans.FirstOrDefault(Span.NULL_SPAN);
-        set => Spans = value.IsNull ? new List<Span>() : new List<Span> { value };
+        set => Spans = value.IsNull ? new() : new() { value };
     }
 
     public override int Page => Span.Page;
