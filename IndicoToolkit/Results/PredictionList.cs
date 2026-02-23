@@ -1,3 +1,4 @@
+using IndicoToolkit.EtlOutputs;
 using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 
@@ -23,6 +24,39 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     {
         foreach (var prediction in this)
             function(prediction);
+
+        return this;
+    }
+
+    /*
+    Assign OCR tokens, tables, and/or cells using `etlOutputs`.
+
+    Use `tokens` or `tables` to skip lookup and assignment of those attributes.
+    */
+    public PredictionList<PredictionType> AssignOcr(
+        IDictionary<Document, EtlOutput> etlOutputs,
+        bool tokens = true,
+        bool tables = true
+    )
+    {
+        var extractionsByDocument = OfType<DocumentExtraction>().GroupBy<Document>(extraction => extraction.Document);
+
+        foreach (var (document, extractions) in extractionsByDocument)
+        {
+            var etlOutput = etlOutputs[document];
+
+            foreach (var extraction in extractions)
+            {
+                if (tokens)
+                    extraction.Tokens = extraction.Spans
+                        .Select(etlOutput.TokenFor)
+                        .Where(token => !token.IsNull)
+                        .ToList();
+
+                if (tables)
+                    extraction.TableCells = extraction.Spans.SelectMany(etlOutput.TableCellsFor);
+            }
+        }
 
         return this;
     }
