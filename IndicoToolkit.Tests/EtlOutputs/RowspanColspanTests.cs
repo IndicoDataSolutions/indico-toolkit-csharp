@@ -16,7 +16,7 @@ public class RowspanColspanTests
         "4725", "112731", "112257", "etl_output_rs_cs.json"
     );
 
-    public static string ReadUri(string uri)
+    private static string ReadUri(string uri)
     {
         var storageFolderPath = uri.Split("/storage/submission/").Last();
         var filePath = Path.Combine(SamplesFolder, storageFolderPath);
@@ -37,13 +37,13 @@ public class RowspanColspanTests
     | November |                   | Oscar   |
      ----------------------------------------
     */
-    public static EtlOutput SampleEtlOutput => EtlOutput.Load(EtlOutputFile, reader: ReadUri);
-    public static Table SampleTable => SampleEtlOutput.Tables.First();
+    private static EtlOutput etlOutput => EtlOutput.Load(EtlOutputFile, reader: ReadUri);
+    private static Table table => etlOutput.Tables.First();
 
     [Fact]
     public void TestCells()
     {
-        var sampleCells = SampleTable.Cells.Select(cell => cell.Text);
+        var cells = table.Cells.Select(cell => cell.Text);
         var expectedCells = new List<string> {
             "Alfa", "Bravo", "Charlie", "Delta",
             "Echo", "Foxtrot", "Golf",
@@ -52,13 +52,13 @@ public class RowspanColspanTests
             "November", "Oscar",
         };
 
-        Assert.Equal(expectedCells, sampleCells);
+        Assert.Equal(expectedCells, cells);
     }
 
     [Fact]
     public void TestRows()
     {
-        var sampleRows = SampleTable.Rows.Select(row => row.Select(cell => cell.Text).ToList()).ToList();
+        var rows = table.Rows.Select(row => row.Select(cell => cell.Text).ToList()).ToList();
         var expectedRows = new List<List<string>> {
             new() { "Alfa", "Bravo", "Charlie", "Delta" },
             new() { "Echo", "Foxtrot", "Foxtrot", "Golf" },
@@ -67,13 +67,13 @@ public class RowspanColspanTests
             new() { "November", "Lima", "Lima", "Oscar" },
         };
 
-        Assert.Equal(expectedRows, sampleRows);
+        Assert.Equal(expectedRows, rows);
     }
 
     [Fact]
     public void TestColumns()
     {
-        var sampleColumns = SampleTable.Columns.Select(column => column.Select(cell => cell.Text).ToList()).ToList();
+        var columns = table.Columns.Select(column => column.Select(cell => cell.Text).ToList()).ToList();
         var expectedColumns = new List<List<string>> {
             new() {
                 "Alfa",
@@ -105,7 +105,7 @@ public class RowspanColspanTests
             },
         };
 
-        Assert.Equal(expectedColumns, sampleColumns);
+        Assert.Equal(expectedColumns, columns);
     }
 
     [Theory]
@@ -127,7 +127,7 @@ public class RowspanColspanTests
     public void TestTableCellFor(int page, int start, int end, string expectedText)
     {
         var span = new Span(page, start, end);
-        var tableCell = SampleEtlOutput.TableCellsFor(span).First();
+        var tableCell = etlOutput.TableCellsFor(span).First();
 
         Assert.Equal(expectedText, tableCell.Cell.Text);
     }

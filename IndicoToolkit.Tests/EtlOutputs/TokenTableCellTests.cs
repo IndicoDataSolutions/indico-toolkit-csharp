@@ -16,18 +16,18 @@ public class TokenTableCellTests
         "4725", "111924", "110239", "etl_output.json"
     );
 
-    public static string ReadUri(string uri)
+    private static string ReadUri(string uri)
     {
         var storageFolderPath = uri.Split("/storage/submission/").Last();
         var filePath = Path.Combine(SamplesFolder, storageFolderPath);
         return File.ReadAllText(filePath);
     }
 
-    public static Span HeaderSpan => new(1, 1281, 1285);
-    public static Span ContentSpan => new(1, 1343, 1349);
-    public static Span LineItemSpan => new(1, 1311, 1244);
-    public static Span MultipleTableSpan => new(1, 1217, 1299);
-    public static Span OutsideTableSpan => new(1, 1056, 1067);
+    private static Span HeaderSpan => new(1, 1281, 1285);
+    private static Span ContentSpan => new(1, 1343, 1349);
+    private static Span LineItemSpan => new(1, 1311, 1244);
+    private static Span MultipleTableSpan => new(1, 1217, 1299);
+    private static Span OutsideTableSpan => new(1, 1056, 1067);
 
     [Fact]
     public void TestTextSlice()

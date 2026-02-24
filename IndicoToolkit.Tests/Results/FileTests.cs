@@ -2,24 +2,24 @@ using IndicoToolkit.Results;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-namespace IndicoToolkit.Tests;
+namespace IndicoToolkit.Tests.Results;
 
 
-public class ResultTests
+public class FileTests
 {
-    // The base directory will be IndicoToolkit.Tests/bin/Debug/net8.0/
-    private string SamplesFolder = Path.Combine(
+    // The base directory will be IndicoToolkit.Tests/bin/Debug/net*/
+    private static readonly string SamplesFolder = Path.Combine(
         AppDomain.CurrentDomain.BaseDirectory,
         "..", "..", "..", "Results", "Samples"
     );
 
-    public string ReadUri(string uri)
+    private static string ReadUri(string uri)
     {
         var filePath = Path.Combine(SamplesFolder, uri);
         return File.ReadAllText(filePath);
     }
 
-    public async Task<string> ReadUriAsync(string uri)
+    private static async Task<string> ReadUriAsync(string uri)
     {
         var filePath = Path.Combine(SamplesFolder, uri);
         return File.ReadAllText(filePath);
@@ -32,7 +32,7 @@ public class ResultTests
     [InlineData("classify_extract_unreviewed.json")]
     [InlineData("classify_unbundle.json")]
     [InlineData("genai_classify_extract_summarize.json")]
-    public void TestSampleFiles(string filename)
+    public void TestFileLoad(string filename)
     {
         var result = Result.Load(filename, reader: ReadUri);
         var changes = result.PreReview.ToChanges(result);
@@ -47,11 +47,19 @@ public class ResultTests
     [InlineData("classify_extract_unreviewed.json")]
     [InlineData("classify_unbundle.json")]
     [InlineData("genai_classify_extract_summarize.json")]
-    public async Task TestSampleFilesAsync(string filename)
+    public async Task TestFileLoadAsync(string filename)
     {
         var result = await Result.LoadAsync(filename, reader: ReadUriAsync);
         var changes = result.PreReview.ToChanges(result);
         Assert.NotNull(result);
         Assert.NotNull(changes);
+    }
+
+    [Fact]
+    public void TestUnsupportedVersion()
+    {
+        Assert.Throws<ResultException>(
+            () => Result.FromJson(JObject.Parse(@"{""file_version"": 1}"))
+        );
     }
 }

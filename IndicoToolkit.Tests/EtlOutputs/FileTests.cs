@@ -4,7 +4,7 @@ using Xunit;
 namespace IndicoToolkit.Tests.EtlOutputs;
 
 
-public class EtlOutputTests
+public class FileTests
 {
     // The base directory will be IndicoToolkit.Tests/bin/Debug/net*/
     private static readonly string SamplesFolder = Path.Combine(
@@ -12,14 +12,14 @@ public class EtlOutputTests
         "..", "..", "..", "EtlOutputs", "Samples"
     );
 
-    public static string ReadUri(string uri)
+    private static string ReadUri(string uri)
     {
         var storageFolderPath = uri.Split("/storage/submission/").Last();
         var filePath = Path.Combine(SamplesFolder, storageFolderPath);
         return File.ReadAllText(filePath);
     }
 
-    public static async Task<string> ReadUriAsync(string uri)
+    private static async Task<string> ReadUriAsync(string uri)
     {
         var storageFolderPath = uri.Split("/storage/submission/").Last();
         var filePath = Path.Combine(SamplesFolder, storageFolderPath);
