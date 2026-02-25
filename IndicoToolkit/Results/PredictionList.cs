@@ -16,6 +16,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
     public PredictionList() : base() { }
     public PredictionList(IEnumerable<PredictionType> collection) : base(collection) { }
+    public new PredictionList<PredictionType> Slice(int offset, int length) => new(GetRange(offset, length));
 
     /*
     Apply `function` to all predictions.
