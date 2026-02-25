@@ -40,7 +40,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         bool tables = true
     )
     {
-        var extractionsByDocument = OfType<DocumentExtraction>().GroupBy<Document>(extraction => extraction.Document);
+        var extractionsByDocument = OfType<DocumentExtraction>().GroupBy(extraction => extraction.Document);
 
         foreach (var (document, extractions) in extractionsByDocument)
         {
@@ -156,8 +156,8 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
         ICollection<Document>? documentIn = null,
-        Results.Tasks.Task? task = null,
-        ICollection<Results.Tasks.Task>? taskIn = null,
+        Tasks.Task? task = null,
+        ICollection<Tasks.Task>? taskIn = null,
         string? taskName = null,
         ICollection<string>? taskNameIn = null,
         TaskType? taskType = null,
@@ -236,7 +236,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             predicates.Add(pred =>
                 pred is Extraction && pageIn.Contains((pred as Extraction).Page)
                 ||
-                pred is Unbundling && pageIn.ToImmutableHashSet().Intersect((pred as Unbundling).Pages).Any()
+                pred is Unbundling && !pageIn.ToImmutableHashSet().Intersect((pred as Unbundling).Pages).IsEmpty
             );
 
         if (minConfidence != null)
@@ -326,7 +326,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
             var predictionsByTask = this.Where(
                 document: document
-            ).GroupBy<Results.Tasks.Task>(
+            ).GroupBy(
                 prediction => prediction.Task
             );
 

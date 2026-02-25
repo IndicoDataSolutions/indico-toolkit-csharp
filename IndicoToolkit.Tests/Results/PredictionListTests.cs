@@ -1,6 +1,4 @@
-using IndicoToolkit.EtlOutputs;
 using IndicoToolkit.Results;
-using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 using Xunit;
 
@@ -8,7 +6,7 @@ namespace IndicoToolkit.Tests.Results;
 
 public class PredictionListTests
 {
-    private static Document document => new(
+    private static Document Document => new(
         2922,
         "1040_filled.tiff",
         "indico-file:///storage/submission/2922/etl_output.json",
@@ -19,25 +17,25 @@ public class PredictionListTests
         ImmutableHashSet<string>.Empty
     );
 
-    public static IndicoToolkit.Results.Tasks.Task classificationTask => new(
+    private static IndicoToolkit.Results.Tasks.Task ClassificationTask => new(
         121, "Tax Classification", TaskType.CLASSIFICATION
     );
-    public static IndicoToolkit.Results.Tasks.Task extractionTask => new(
+    private static IndicoToolkit.Results.Tasks.Task ExtractionTask => new(
         122, "1040 Document Extraction", TaskType.DOCUMENT_EXTRACTION
     );
 
-    public static Review autoReview => new(1306, 5, "", false, ReviewType.AUTO);
-    public static Review manualReview => new(1308, 5, "", false, ReviewType.MANUAL);
+    private static Review AutoReview => new(1306, 5, "", false, ReviewType.AUTO);
+    private static Review ManualReview => new(1308, 5, "", false, ReviewType.MANUAL);
 
-    public static Group groupAlpha => new(12345, "Alpha", 0);
-    public static Group groupBravo => new(12345, "Bravo", 0);
+    private static Group GroupAlpha => new(12345, "Alpha", 0);
+    private static Group GroupBravo => new(12345, "Bravo", 0);
 
-    public static PredictionList<Prediction> Predictions = new()
+    private static readonly PredictionList<Prediction> Predictions = new()
     {
         new Classification()
         {
-            Document = document,
-            Task = classificationTask,
+            Document = Document,
+            Task = ClassificationTask,
             Review = null,
             Label = "1040",
             Confidences = new() { {"1040", 0.7} },
@@ -45,13 +43,13 @@ public class PredictionListTests
         },
         new DocumentExtraction()
         {
-            Document = document,
-            Task = extractionTask,
-            Review = autoReview,
+            Document = Document,
+            Task = ExtractionTask,
+            Review = AutoReview,
             Label = "First Name",
             Confidences = new() { {"First Name", 0.8} },
             Text = "John",
-            Groups = new() { groupAlpha },
+            Groups = new() { GroupAlpha },
             Spans = new() { new(0, 352, 356) },
             Tokens = new(),
             Tables = new(),
@@ -60,13 +58,13 @@ public class PredictionListTests
         },
         new DocumentExtraction()
         {
-            Document = document,
-            Task = extractionTask,
-            Review = manualReview,
+            Document = Document,
+            Task = ExtractionTask,
+            Review = ManualReview,
             Label = "Last Name",
             Confidences = new() { {"Last Name", 0.9} },
             Text = "Doe",
-            Groups = new() { groupAlpha, groupBravo },
+            Groups = new() { GroupAlpha, GroupBravo },
             Spans = new() { new(1, 357, 360) },
             Tokens = new(),
             Tables = new(),
@@ -111,25 +109,21 @@ public class PredictionListTests
         var extractions = Predictions.DocumentExtractions;
         var firstName = extractions.First();
         var lastName = extractions.Last();
-
-        var predictionsByGroups = extractions.GroupBy<HashSet<Group>>(e => e.Groups);
         Assert.Equal(
             new()
             {
                 { firstName.Groups, new() { firstName } },
                 { lastName.Groups, new() { lastName } },
             },
-            predictionsByGroups
+            extractions.GroupBy(e => e.Groups)
         );
-
-        var predictionsBySpans = extractions.GroupBy<List<Span>>(e => e.Spans);
         Assert.Equal(
             new()
             {
                 { firstName.Spans, new() { firstName } },
                 { lastName.Spans, new() { lastName } },
             },
-            predictionsBySpans
+            extractions.GroupBy(e => e.Spans)
         );
     }
 
@@ -139,14 +133,13 @@ public class PredictionListTests
         var extractions = Predictions.DocumentExtractions;
         var firstName = extractions.First();
         var lastName = extractions.Last();
-        var predictionsByGroup = extractions.GroupByIter<Group>(e => e.Groups);
         Assert.Equal(
             new()
             {
-                { groupAlpha, new() { firstName, lastName } },
-                { groupBravo, new() { lastName } },
+                { GroupAlpha, new() { firstName, lastName } },
+                { GroupBravo, new() { lastName } },
             },
-            predictionsByGroup
+            extractions.GroupByIter(e => e.Groups)
         );
     }
 
@@ -157,20 +150,22 @@ public class PredictionListTests
         var classification = predictions.First();
         var firstName = predictions.Skip(1).First();
         var lastName = predictions.Skip(2).First();
-        var ordered = predictions.OrderBy(p => p.Confidence, reverse: true);
-        Assert.Equal(new() { lastName, firstName, classification }, ordered);
+        Assert.Equal(
+            new() { lastName, firstName, classification },
+            predictions.OrderBy(p => p.Confidence, reverse: true)
+        );
     }
 
     [Fact]
     public void TestWhereDocument()
     {
-        Assert.Equal(Predictions, Predictions.Where(document: document));
+        Assert.Equal(Predictions, Predictions.Where(document: Document));
     }
 
     [Fact]
     public void TestWhereDocumentIn()
     {
-        Assert.Equal(Predictions, Predictions.Where(documentIn: new[] { document }));
+        Assert.Equal(Predictions, Predictions.Where(documentIn: new[] { Document }));
         Assert.Empty(Predictions.Where(documentIn: new List<Document> { }));
     }
 
@@ -179,7 +174,7 @@ public class PredictionListTests
     {
         var predictions = Predictions;
         var classification = predictions.Classifications.Single();
-        Assert.Equal(new() { classification }, predictions.Where(task: classificationTask));
+        Assert.Equal(new() { classification }, predictions.Where(task: ClassificationTask));
         Assert.Equal(new() { classification }, predictions.Where(taskType: TaskType.CLASSIFICATION));
         Assert.Equal(new() { classification }, predictions.Where(taskName: "Tax Classification"));
     }
@@ -191,7 +186,7 @@ public class PredictionListTests
         var classification = predictions.First();
         var firstName = predictions.Skip(1).First();
         var lastName = predictions.Skip(2).First();
-        Assert.Equal(new() { classification }, predictions.Where(taskIn: new[] { classificationTask }));
+        Assert.Equal(new() { classification }, predictions.Where(taskIn: new[] { ClassificationTask }));
         Assert.Equal(new() { classification }, predictions.Where(taskTypeIn: new[] { TaskType.CLASSIFICATION }));
         Assert.Equal(new() { classification, firstName, lastName }, predictions.Where(taskTypeIn: new[] { TaskType.CLASSIFICATION, TaskType.DOCUMENT_EXTRACTION }));
         Assert.Equal(new() { classification }, predictions.Where(taskNameIn: new[] { "Tax Classification" }));
@@ -210,7 +205,7 @@ public class PredictionListTests
         var lastName = predictions.Skip(2).First();
         Assert.Equal(predictions, predictions.Where(review: null));
         Assert.Equal(new() { classification }, predictions.Where(p => p.Review == null));
-        Assert.Equal(new() { firstName }, predictions.Where(review: autoReview));
+        Assert.Equal(new() { firstName }, predictions.Where(review: AutoReview));
         Assert.Equal(new() { lastName }, predictions.Where(reviewType: ReviewType.MANUAL));
     }
 
@@ -222,7 +217,7 @@ public class PredictionListTests
         var firstName = predictions.Skip(1).First();
         var lastName = predictions.Skip(2).First();
         Assert.Equal(new() { classification }, predictions.Where(reviewIn: new List<Review?> { null }));
-        Assert.Equal(new() { classification, firstName }, predictions.Where(reviewIn: new List<Review?> { null, autoReview }));
+        Assert.Equal(new() { classification, firstName }, predictions.Where(reviewIn: new List<Review?> { null, AutoReview }));
         Assert.Equal(new() { firstName, lastName }, predictions.Where(reviewTypeIn: new[] { ReviewType.AUTO, ReviewType.MANUAL }));
         Assert.Empty(predictions.Where(reviewIn: new List<Review?> { }));
         Assert.Empty(predictions.Where(reviewTypeIn: new List<ReviewType> { }));

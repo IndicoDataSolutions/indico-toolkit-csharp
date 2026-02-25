@@ -128,10 +128,10 @@ public static class Utils
     {
         if (instance == null)
             return "null";
-        else if (instance is string)
-            return PrettyPrintStringProperty((string)instance);
-        else if (instance is IEnumerable<object>)
-            return PrettyPrintEnumerableProperty((IEnumerable<object>)instance);
+        else if (instance is string instanceString)
+            return PrettyPrintStringProperty(instanceString);
+        else if (instance is IEnumerable<object> instanceEnumerable)
+            return PrettyPrintEnumerableProperty(instanceEnumerable);
         else
             return instance?.ToString() ?? "";
     }

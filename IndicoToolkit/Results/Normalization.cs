@@ -4,8 +4,11 @@ using System.Text.RegularExpressions;
 namespace IndicoToolkit.Results;
 
 
-public static class Normalization
+public static partial class Normalization
 {
+    [GeneratedRegex(@"file '([^']*)' with id")]
+    private static partial Regex FilenameRegex();
+
     public static void NormalizeResultJson(JToken json)
     {
         foreach (var erroredFile in Utils.Get<JObject>(json, "errored_files").PropertyValues())
@@ -14,7 +17,7 @@ public static class Normalization
             if (!Utils.Has<string>(erroredFile, "input_filename"))
             {
                 var reason = Utils.Get<string>(erroredFile, "reason");
-                var match = Regex.Match(reason, @"file '([^']*)' with id");
+                var match = FilenameRegex().Match(reason);
                 erroredFile["input_filename"] = match.Success ? match.Groups[1].Value : "";
             }
 

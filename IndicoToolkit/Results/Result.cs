@@ -8,7 +8,7 @@ public record Result
 (
     int SubmissionId,
     ImmutableArray<Document> Documents,
-    ImmutableArray<Results.Tasks.Task> Tasks,
+    ImmutableArray<Tasks.Task> Tasks,
     ImmutableArray<Review> Reviews,
     PredictionList<Prediction> Predictions
 ) : IComparable<Result>

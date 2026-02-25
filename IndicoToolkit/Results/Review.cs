@@ -42,7 +42,7 @@ public record Review
             Utils.Get<int>(json, "reviewer_id"),
             Utils.Get<string>(json, "review_notes"),
             Utils.Get<bool>(json, "review_rejected"),
-            Review.ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
+            ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
         );
     }
 

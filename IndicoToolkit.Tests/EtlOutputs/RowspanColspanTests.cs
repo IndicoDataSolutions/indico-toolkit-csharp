@@ -37,13 +37,13 @@ public class RowspanColspanTests
     | November |                   | Oscar   |
      ----------------------------------------
     */
-    private static EtlOutput etlOutput => EtlOutput.Load(EtlOutputFile, reader: ReadUri);
-    private static Table table => etlOutput.Tables.First();
+    private static EtlOutput EtlOutput => EtlOutput.Load(EtlOutputFile, reader: ReadUri);
+    private static Table Table => EtlOutput.Tables.First();
 
     [Fact]
     public void TestCells()
     {
-        var cells = table.Cells.Select(cell => cell.Text);
+        var cells = Table.Cells.Select(cell => cell.Text);
         var expectedCells = new List<string> {
             "Alfa", "Bravo", "Charlie", "Delta",
             "Echo", "Foxtrot", "Golf",
@@ -58,7 +58,7 @@ public class RowspanColspanTests
     [Fact]
     public void TestRows()
     {
-        var rows = table.Rows.Select(row => row.Select(cell => cell.Text).ToList()).ToList();
+        var rows = Table.Rows.Select(row => row.Select(cell => cell.Text).ToList()).ToList();
         var expectedRows = new List<List<string>> {
             new() { "Alfa", "Bravo", "Charlie", "Delta" },
             new() { "Echo", "Foxtrot", "Foxtrot", "Golf" },
@@ -73,7 +73,7 @@ public class RowspanColspanTests
     [Fact]
     public void TestColumns()
     {
-        var columns = table.Columns.Select(column => column.Select(cell => cell.Text).ToList()).ToList();
+        var columns = Table.Columns.Select(column => column.Select(cell => cell.Text).ToList()).ToList();
         var expectedColumns = new List<List<string>> {
             new() {
                 "Alfa",
@@ -127,7 +127,7 @@ public class RowspanColspanTests
     public void TestTableCellFor(int page, int start, int end, string expectedText)
     {
         var span = new Span(page, start, end);
-        var tableCell = etlOutput.TableCellsFor(span).First();
+        var tableCell = EtlOutput.TableCellsFor(span).First();
 
         Assert.Equal(expectedText, tableCell.Cell.Text);
     }

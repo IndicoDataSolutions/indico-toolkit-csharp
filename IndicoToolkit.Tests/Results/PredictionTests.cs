@@ -8,12 +8,12 @@ namespace IndicoToolkit.Tests.Results;
 
 public class PredictionTests
 {
-    private static Document document => new(
+    private static Document Document => new(
         0, "", "", false, "", "", ImmutableHashSet<string>.Empty, ImmutableHashSet<string>.Empty
     );
 
-    private static DocumentExtraction documentExtraction => DocumentExtraction.FromJson(
-        document,
+    private static DocumentExtraction DocumentExtraction => DocumentExtraction.FromJson(
+        Document,
         new IndicoToolkit.Results.Tasks.Task(0, "", TaskType.DOCUMENT_EXTRACTION),
         null,
         JObject.Parse(@"
@@ -32,8 +32,8 @@ public class PredictionTests
         ")
     );
 
-    private static FormExtraction formExtraction => FormExtraction.FromJson(
-        document,
+    private static FormExtraction FormExtraction => FormExtraction.FromJson(
+        Document,
         new IndicoToolkit.Results.Tasks.Task(0, "", TaskType.FORM_EXTRACTION),
         null,
         JObject.Parse(@"
@@ -56,8 +56,8 @@ public class PredictionTests
         ")
     );
 
-    private static Summarization summarization => Summarization.FromJson(
-        document,
+    private static Summarization Summarization => Summarization.FromJson(
+        Document,
         new IndicoToolkit.Results.Tasks.Task(0, "", TaskType.GENAI_SUMMARIZATION),
         null,
         JObject.Parse(@"
@@ -75,8 +75,8 @@ public class PredictionTests
         ")
     );
 
-    private static Unbundling unbundling => Unbundling.FromJson(
-        document,
+    private static Unbundling Unbundling => Unbundling.FromJson(
+        Document,
         new IndicoToolkit.Results.Tasks.Task(0, "", TaskType.UNBUNDLING),
         null,
         JObject.Parse(@"
@@ -103,10 +103,10 @@ public class PredictionTests
     [Fact]
     public void TestPage()
     {
-        Assert.Equal(0, documentExtraction.Page);
-        Assert.Equal(0, formExtraction.Page);
-        Assert.Equal(0, summarization.Page);
-        Assert.Equal(ImmutableList.Create(0), unbundling.Pages);
+        Assert.Equal(0, DocumentExtraction.Page);
+        Assert.Equal(0, FormExtraction.Page);
+        Assert.Equal(0, Summarization.Page);
+        Assert.Equal(ImmutableList.Create(0), Unbundling.Pages);
     }
 
     [Theory]
@@ -118,11 +118,11 @@ public class PredictionTests
     {
         Prediction prediction = predictionType switch
         {
-            "documentExtraction" => documentExtraction,
-            "formExtraction" => formExtraction,
-            "summarization" => summarization,
-            "unbundling" => unbundling,
-            _ => throw new System.ArgumentException($"Unknown prediction type: {predictionType}")
+            "documentExtraction" => DocumentExtraction,
+            "formExtraction" => FormExtraction,
+            "summarization" => Summarization,
+            "unbundling" => Unbundling,
+            _ => throw new ArgumentException($"Unknown prediction type: {predictionType}")
         };
 
         prediction.Confidence = 0.5;
@@ -138,10 +138,10 @@ public class PredictionTests
     {
         Extraction extraction = extractionType switch
         {
-            "documentExtraction" => documentExtraction,
-            "formExtraction" => formExtraction,
-            "summarization" => summarization,
-            _ => throw new System.ArgumentException($"Unknown extraction type: {extractionType}")
+            "documentExtraction" => DocumentExtraction,
+            "formExtraction" => FormExtraction,
+            "summarization" => Summarization,
+            _ => throw new ArgumentException($"Unknown extraction type: {extractionType}")
         };
 
         var changes = extraction.ToJson();
@@ -170,10 +170,10 @@ public class PredictionTests
     {
         Extraction extraction = extractionType switch
         {
-            "documentExtraction" => documentExtraction,
-            "formExtraction" => formExtraction,
-            "summarization" => summarization,
-            _ => throw new System.ArgumentException($"Unknown extraction type: {extractionType}")
+            "documentExtraction" => DocumentExtraction,
+            "formExtraction" => FormExtraction,
+            "summarization" => Summarization,
+            _ => throw new ArgumentException($"Unknown extraction type: {extractionType}")
         };
 
         var changes = extraction.ToJson();
@@ -201,9 +201,9 @@ public class PredictionTests
     {
         Extraction extraction = extractionType switch
         {
-            "documentExtraction" => documentExtraction,
-            "formExtraction" => formExtraction,
-            _ => throw new System.ArgumentException($"Unknown extraction type: {extractionType}")
+            "documentExtraction" => DocumentExtraction,
+            "formExtraction" => FormExtraction,
+            _ => throw new ArgumentException($"Unknown extraction type: {extractionType}")
         };
 
         var changes = extraction.ToJson();
@@ -221,7 +221,7 @@ public class PredictionTests
     [Fact]
     public void TestTextCheckbox()
     {
-        var checkbox = formExtraction;
+        var checkbox = FormExtraction;
         checkbox.Type = FormExtractionType.CHECKBOX;
         checkbox.Checked = false;
 
@@ -242,7 +242,7 @@ public class PredictionTests
     [Fact]
     public void TestTextSignature()
     {
-        var signature = formExtraction;
+        var signature = FormExtraction;
         signature.Type = FormExtractionType.SIGNATURE;
         signature.Signed = false;
 
@@ -263,7 +263,7 @@ public class PredictionTests
     [Fact]
     public void TestSpans()
     {
-        var extraction = documentExtraction;
+        var extraction = DocumentExtraction;
         var oldSpan = extraction.Span;
         var newSpan = oldSpan with { Page = 1 };
 
@@ -292,7 +292,7 @@ public class PredictionTests
     [Fact]
     public void TestCitations()
     {
-        var extraction = summarization;
+        var extraction = Summarization;
         var oldCitation = extraction.Citation;
         var oldSpan = extraction.Span;
         Assert.Equal(oldSpan, oldCitation.Span);
@@ -302,22 +302,22 @@ public class PredictionTests
         var oldCitationNewSpan = oldCitation with { Span = newSpan };
 
         extraction.Citations.Add(newCitation);
-        Assert.Equal(new List<Citation> { oldCitation, newCitation }, extraction.Citations);
+        Assert.Equal(new() { oldCitation, newCitation }, extraction.Citations);
         Assert.Equal(oldCitation, extraction.Citation);
-        Assert.Equal(new List<Span> { oldSpan, newSpan }, extraction.Spans);
+        Assert.Equal(ImmutableList.Create(oldSpan, newSpan), extraction.Spans);
         Assert.Equal(oldSpan, extraction.Span);
         Assert.Equal(2, Utils.Get<JArray>(extraction.ToJson(), "citations").Count);
 
         extraction.Span = newSpan;
-        Assert.Equal(new List<Citation> { oldCitationNewSpan }, extraction.Citations);
-        Assert.Equal(new List<Span> { newSpan }, extraction.Spans);
+        Assert.Equal(new() { oldCitationNewSpan }, extraction.Citations);
+        Assert.Equal(ImmutableList.Create(newSpan), extraction.Spans);
         Assert.Equal(newSpan, extraction.Span);
         Assert.Single(Utils.Get<JArray>(extraction.ToJson(), "citations"));
 
         extraction.Citations = new List<Citation> { oldCitation, newCitation };
         extraction.Citation = newCitation;
-        Assert.Equal(new List<Citation> { newCitation }, extraction.Citations);
-        Assert.Equal(new List<Span> { newSpan }, extraction.Spans);
+        Assert.Equal(new() { newCitation }, extraction.Citations);
+        Assert.Equal(ImmutableList.Create(newSpan), extraction.Spans);
         Assert.Equal(newSpan, extraction.Span);
         Assert.Single(Utils.Get<JArray>(extraction.ToJson(), "citations"));
 
