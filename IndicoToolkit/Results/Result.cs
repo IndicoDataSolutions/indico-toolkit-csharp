@@ -21,6 +21,8 @@ public record Result
     public PredictionList<Prediction> Final => Predictions.Where(pred => pred.Review == (Reviews.Any() ? Reviews.Last() : null));
 
     public int CompareTo(Result? other) => (other == null) ? 1 : this.SubmissionId.CompareTo(other.SubmissionId);
+    public virtual bool Equals(Result? other) => other != null && this.SubmissionId == other.SubmissionId;
+    public override int GetHashCode() => this.SubmissionId.GetHashCode();
 
     /*
     Load `resultUri` as a `Result` record. A `reader` function must be supplied to read

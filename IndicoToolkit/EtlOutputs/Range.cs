@@ -27,6 +27,14 @@ public record Range
         else
             return this.Row.CompareTo(other.Row);
     }
+    public virtual bool Equals(Range? other) => (
+        other != null
+        && this.Row == other.Row
+        && this.Column == other.Column
+        && this.RowSpan == other.RowSpan
+        && this.ColumnSpan == other.ColumnSpan
+    );
+    public override int GetHashCode() => HashCode.Combine(Row, Column, RowSpan, ColumnSpan);
 
     public static Range FromJson(JToken json)
     {

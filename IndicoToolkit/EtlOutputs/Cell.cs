@@ -16,12 +16,19 @@ public record Cell
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
 
     /*
-    Uniquely identify cells by hashing their bounding box and spans.
+    Uniquely identify cells by hashing their type, text, box, and range.
 
     This is small speedup for `.GroupBy(e => e.Cell)` compared to
     the default GetHashCode implementation.
     */
-    public override int GetHashCode() => HashCode.Combine(Box, Spans);
+    public virtual bool Equals(Cell? other) => (
+        other != null
+        && this.Type == other.Type
+        && this.Text == other.Text
+        && this.Box == other.Box
+        && this.Range == other.Range
+    );
+    public override int GetHashCode() => HashCode.Combine(Type, Text, Box, Range);
 
     public static CellType CellTypeFromString(string cellType)
     {

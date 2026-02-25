@@ -26,6 +26,8 @@ public record Document
 ) : IComparable<Document>
 {
     public int CompareTo(Document? other) => (other == null) ? 1 : this.Id.CompareTo(other.Id);
+    public virtual bool Equals(Document? other) => other != null && this.Id == other.Id;
+    public override int GetHashCode() => this.Id.GetHashCode();
 
     /*
     Create a `Document` from a `submission_results` list item.

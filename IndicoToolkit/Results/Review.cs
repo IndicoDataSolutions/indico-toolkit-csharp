@@ -13,6 +13,8 @@ public record Review
 ) : IComparable<Review>
 {
     public int CompareTo(Review? other) => (other == null) ? 1 : this.Id.CompareTo(other.Id);
+    public virtual bool Equals(Review? other) => other != null && this.Id == other.Id;
+    public override int GetHashCode() => this.Id.GetHashCode();
 
     /*
     Determine the review type from its string representation.

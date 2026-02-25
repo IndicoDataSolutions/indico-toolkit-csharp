@@ -20,6 +20,8 @@ public record Task
 ) : IComparable<Task>
 {
     public int CompareTo(Task? other) => (other == null) ? 1 : this.Id.CompareTo(other.Id);
+    public virtual bool Equals(Task? other) => other != null && this.Id == other.Id;
+    public override int GetHashCode() => this.Id.GetHashCode();
 
     /*
     Determine the task type of a task from its string representation.

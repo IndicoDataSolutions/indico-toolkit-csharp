@@ -16,12 +16,13 @@ public record Table
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
 
     /*
-    Uniquely identify tables by hashing their bounding box and spans.
+    Uniquely identify tables by their bounding boxes.
 
     This is an order of magnitude speedup for `.GroupBy(e => e.Table)`
     compared to the default GetHashCode implementation.
     */
-    public override int GetHashCode() => HashCode.Combine(Box, Spans);
+    public virtual bool Equals(Table? other) => other != null && this.Box == other.Box;
+    public override int GetHashCode() => this.Box.GetHashCode();
 
     public static Table FromJson(JToken json)
     {
