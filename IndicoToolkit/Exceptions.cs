@@ -11,11 +11,11 @@ public class IndicoToolkitException : System.Exception
 
 
 /*
-Thrown when an error occurs in traversing JSON in `Utils.Get()`.
+Thrown when an error occurs accessing `EtlOutput` values.
 */
-public class TraversalException : IndicoToolkitException
+public class EtlOutputException : IndicoToolkitException
 {
-    public TraversalException(string message) : base(message) { }
+    public EtlOutputException(string message) : base(message) { }
 }
 
 
@@ -26,4 +26,13 @@ E.g. an unsupported result file version.
 public class ResultException : IndicoToolkitException
 {
     public ResultException(string message) : base(message) { }
+}
+
+
+/*
+Thrown when an error occurs in traversing JSON in `Utils.Get()`.
+*/
+public class TraversalException : IndicoToolkitException
+{
+    public TraversalException(string message) : base(message) { }
 }
