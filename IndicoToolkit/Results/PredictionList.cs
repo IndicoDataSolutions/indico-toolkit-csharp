@@ -163,7 +163,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         TaskType? taskType = null,
         ICollection<TaskType>? taskTypeIn = null,
         Review? review = null,
-        ICollection<Review>? reviewIn = null,
+        ICollection<Review?>? reviewIn = null,
         ReviewType? reviewType = null,
         ICollection<ReviewType>? reviewTypeIn = null,
         string? label = null,
@@ -211,7 +211,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             predicates.Add(pred => pred.Review == review);
 
         if (reviewIn != null)
-            predicates.Add(pred => pred.Review != null && reviewIn.Contains(pred.Review));
+            predicates.Add(pred => reviewIn.Contains(pred.Review));
 
         if (reviewType != null)
             predicates.Add(pred => pred.Review != null && pred.Review.Type == reviewType);
