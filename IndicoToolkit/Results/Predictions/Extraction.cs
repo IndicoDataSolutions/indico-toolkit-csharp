@@ -3,7 +3,7 @@ namespace IndicoToolkit.Results;
 
 public abstract record Extraction : Prediction
 {
-    public string Text { get; set; }
+    public required string Text { get; set; }
     public bool Accepted { get; protected set; }
     public bool Rejected { get; protected set; }
 

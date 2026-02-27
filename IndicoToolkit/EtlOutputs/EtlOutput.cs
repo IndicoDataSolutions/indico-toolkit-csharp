@@ -1,4 +1,3 @@
-using IndicoToolkit.Results;
 using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 
@@ -7,13 +6,37 @@ namespace IndicoToolkit.EtlOutputs;
 public record EtlOutput
 (
     string Text,
-    ImmutableList<string> TextOnPage,
-    ImmutableList<Token> Tokens,
-    ImmutableList<ImmutableList<Token>> TokensOnPage,
-    ImmutableList<Table> Tables,
-    ImmutableList<ImmutableList<Table>> TablesOnPage
+    ImmutableArray<string> TextOnPage,
+    ImmutableArray<Token> Tokens,
+    ImmutableArray<ImmutableArray<Token>> TokensOnPage,
+    ImmutableArray<Table> Tables,
+    ImmutableArray<ImmutableArray<Table>> TablesOnPage
 )
 {
+    /*
+    Lazily compute & memoize table cells sorted by span on each page.
+    */
+    private ImmutableArray<ImmutableArray<(Table Table, Cell Cell, Span Span)>> _TableCellSpansOnPage;
+    private ImmutableArray<ImmutableArray<(Table Table, Cell Cell, Span Span)>> TableCellSpansOnPage
+    {
+        get
+        {
+            if (_TableCellSpansOnPage.IsDefault)
+            {
+                _TableCellSpansOnPage = TablesOnPage
+                    .Select(page => page
+                        .SelectMany(table => table.Cells
+                            .SelectMany(cell => cell.Spans
+                                .Where(span => !span.IsNull)
+                                .Select(span => (Table: table, Cell: cell, Span: span))))
+                        .OrderBy(tuple => tuple.Span)
+                        .ToImmutableArray())
+                    .ToImmutableArray();
+            }
+            return _TableCellSpansOnPage;
+        }
+    }
+
     /*
     Load `etlOutputUri` as an `EtlOutput` record. A `reader` function must be
     supplied to read JSON and text strings from disk, storage API, or Indico client.
@@ -38,17 +61,17 @@ public record EtlOutput
         if (text && Utils.Has<string>(pages, 0, "text"))
             textPages = pages.Select(page => reader(Utils.Get<string>(page, "text")));
         else
-            textPages = ImmutableList<string>.Empty;
+            textPages = ImmutableArray<string>.Empty;
 
         if (tokens && Utils.Has<string>(pages, 0, "tokens"))
             tokenJsonPages = pages.Select(page => JArray.Parse(reader(Utils.Get<string>(page, "tokens"))));
         else
-            tokenJsonPages = ImmutableList<JArray>.Empty;
+            tokenJsonPages = ImmutableArray<JArray>.Empty;
 
         if (tables && Utils.Has<string>(pages, 0, "tables"))
             tableJsonPages = pages.Select(page => JArray.Parse(reader(Utils.Get<string>(page, "tables"))));
         else
-            tableJsonPages = ImmutableList<JArray>.Empty;
+            tableJsonPages = ImmutableArray<JArray>.Empty;
 
         return FromPages(textPages, tokenJsonPages, tableJsonPages);
     }
@@ -99,44 +122,45 @@ public record EtlOutput
             .Select(page => page
                 .Select(Token.FromJson)
                 .OrderBy(token => token.Span)
-                .ToImmutableList())
-            .ToImmutableList();
+                .ToImmutableArray())
+            .ToImmutableArray();
 
         var tablePages = tableJsonPages
             .Select(page => page
                 .Select(Table.FromJson)
                 .OrderBy(table => table.Box)
-                .ToImmutableList())
-            .ToImmutableList();
+                .ToImmutableArray())
+            .ToImmutableArray();
 
         return new(
             string.Join("\n", textPages),
-            textPages.ToImmutableList(),
-            tokenPages.SelectMany(page => page).ToImmutableList(),
+            textPages.ToImmutableArray(),
+            tokenPages.SelectMany(page => page).ToImmutableArray(),
             tokenPages,
-            tablePages.SelectMany(page => page).ToImmutableList(),
+            tablePages.SelectMany(page => page).ToImmutableArray(),
             tablePages
         );
     }
 
     /*
-    Return a `Token` that contains every character from `span`.
-    Throws `TokenNotFoundException` if one can't be produced.
+    Return a `Token` that contains every character from `span`
+    or `NULL_TOKEN` if one doesn't exist.
     */
     public Token TokenFor(Span span)
     {
-        ImmutableList<Token> tokens;
+        ImmutableArray<Token> tokens;
 
         try
         {
             tokens = TokensOnPage[span.Page];
             var first = BisectRight<Token>(tokens, span.Start, key: token => token.Span.End);
             var last = BisectLeft<Token>(tokens, span.End, key: token => token.Span.Start, low: first);
-            tokens = tokens.GetRange(first, last - first);
+            tokens = tokens[first..last];
+            tokens.First();  // Raise an exception if there are no tokens.
         }
         catch
         {
-            throw new TokenNotFoundException($"no token contains {span}");
+            return Token.NULL_TOKEN;
         }
 
         return new Token(
@@ -153,43 +177,34 @@ public record EtlOutput
     }
 
     /*
-    Return the `Table` and `Cell` that contain the midpoint of `token`.
-    Throws `TableCellNotFoundException` if it's not inside a table cell.
+    Yield the table cells that overlap with `span`.
+
+    Note: a single span may overlap the same cell multiple times causing it to be
+    yielded multiple times. Deduplication in `DocumentExtraction.TableCells`
+    accounts for this when OCR is assigned with `PredictionList.AssignOcr()`.
     */
-    public (Table, Cell) TableCellFor(Token token)
+    public IEnumerable<(Table Table, Cell Cell)> TableCellsFor(Span span)
     {
-        var tokenMidV = (token.Box.Top + token.Box.Bottom) / 2;
-        var tokenMidH = (token.Box.Left + token.Box.Right) / 2;
-
-        var table = TablesOnPage[token.Box.Page]
-            .Where(table => (
-                (table.Box.Top <= tokenMidV && tokenMidV <= table.Box.Bottom) &&
-                (table.Box.Left <= tokenMidH && tokenMidH <= table.Box.Right)
-            ))
-            .FirstOrDefault();
-
-        if (table == null)
-            throw new TableCellNotFoundException($"no table contains {token}");
-
+        ImmutableArray<(Table Table, Cell Cell, Span Span)> tableCellSpans;
         try
         {
-            var rowIndex = BisectLeft<ImmutableList<Cell>>(table.Rows, tokenMidV, key: row => row.First().Box.Bottom);
-            var row = table.Rows[rowIndex];
-
-            var cellIndex = BisectLeft<Cell>(row, tokenMidH, key: cell => cell.Box.Right);
-            var cell = row[cellIndex];
-
-            return (table, cell);
+            var pageTableCellSpans = TableCellSpansOnPage[span.Page];
+            var first = BisectRight(pageTableCellSpans, span.Start, key: tuple => tuple.Span.End);
+            var last = BisectLeft(pageTableCellSpans, span.End, key: tuple => tuple.Span.Start, low: first);
+            tableCellSpans = pageTableCellSpans[first..last];
         }
         catch
         {
-            throw new TableCellNotFoundException($"no cell contains {token}");
+            tableCellSpans = ImmutableArray<(Table Table, Cell Cell, Span Span)>.Empty;
         }
+
+        foreach (var (table, cell, _) in tableCellSpans)
+            yield return (Table: table, Cell: cell);
     }
 
-    private static int BisectLeft<T>(ImmutableList<T> tokens, int search, Func<T, int> key, int low = 0)
+    private static int BisectLeft<T>(ImmutableArray<T> tokens, int search, Func<T, int> key, int low = 0)
     {
-        int high = tokens.Count;
+        int high = tokens.Length;
 
         while (low < high)
         {
@@ -204,10 +219,10 @@ public record EtlOutput
         return low;
     }
 
-    private static int BisectRight<T>(ImmutableList<T> tokens, int search, Func<T, int> key)
+    private static int BisectRight<T>(ImmutableArray<T> tokens, int search, Func<T, int> key)
     {
         int low = 0;
-        int high = tokens.Count;
+        int high = tokens.Length;
 
         while (low < high)
         {

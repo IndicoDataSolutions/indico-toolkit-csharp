@@ -1,3 +1,4 @@
+using IndicoToolkit.EtlOutputs;
 using Newtonsoft.Json.Linq;
 
 namespace IndicoToolkit.Results;
@@ -5,8 +6,8 @@ namespace IndicoToolkit.Results;
 
 public record FormExtraction : Extraction
 {
-    public FormExtractionType Type { get; set; }
-    public Box Box { get; set; }
+    public required FormExtractionType Type { get; set; }
+    public required Box Box { get; set; }
     public bool Checked { get; set; }
     public bool Signed { get; set; }
 
@@ -52,7 +53,7 @@ public record FormExtraction : Extraction
                 Utils.Has<bool>(json, "normalized", "structured", "signed")
                 && Utils.Get<bool>(json, "normalized", "structured", "signed")
             ),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 
@@ -72,19 +73,21 @@ public record FormExtraction : Extraction
 
         if (Type == FormExtractionType.CHECKBOX)
         {
-            Extras["normalized"]["structured"] = new JObject { ["checked"] = Checked };
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
+            normalized["structured"] = new JObject { ["checked"] = Checked };
             var text = Checked ? "Checked" : "Unchecked";
-            Extras["normalized"]["formatted"] = text;
-            Extras["normalized"]["text"] = text;
+            normalized["formatted"] = text;
+            normalized["text"] = text;
             Extras["text"] = text;
         }
         else if (Type == FormExtractionType.SIGNATURE)
         {
-            Extras["normalized"]["structured"] = new JObject { ["signed"] = Signed };
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
             var text = Signed ? "Signed" : "Unsigned";
-            Extras["normalized"]["formatted"] = text;
+            normalized["structured"] = new JObject { ["signed"] = Signed };
+            normalized["formatted"] = text;
             // Don't overwrite the text of the signature stored in these attributes.
-            // Extras["normalized"]["text"] = text;
+            // normalized["text"] = text;
             // Extras["text"] = text;
         }
         else if (
@@ -92,8 +95,9 @@ public record FormExtraction : Extraction
             && Text != Utils.Get<string>(Extras, "normalized", "formatted")
         )
         {
-            Extras["normalized"]["formatted"] = Text;
-            Extras["normalized"]["text"] = Text;
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
+            normalized["formatted"] = Text;
+            normalized["text"] = Text;
             Extras["text"] = Text;
         }
 

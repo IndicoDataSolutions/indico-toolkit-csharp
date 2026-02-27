@@ -1,3 +1,4 @@
+using IndicoToolkit.EtlOutputs;
 using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 
@@ -6,12 +7,12 @@ namespace IndicoToolkit.Results;
 
 public record Summarization : Extraction
 {
-    public List<Citation> Citations { get; set; }
+    public required List<Citation> Citations { get; set; }
 
     public Citation Citation
     {
         get => Citations.FirstOrDefault(Citation.NULL_CITATION);
-        set => Citations = value.IsNull ? new List<Citation>() : new List<Citation> { value };
+        set => Citations = value.IsNull ? new() : new() { value };
     }
 
     public ImmutableList<Span> Spans => Citations.Select(citation => citation.Span).ToImmutableList();
@@ -40,7 +41,7 @@ public record Summarization : Extraction
             Accepted = Utils.Has<bool>(json, "accepted") && Utils.Get<bool>(json, "accepted"),
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
             Citations = Utils.Get<JArray>(json, "citations").Select(Citation.FromJson).Order().ToList(),
-            Extras = json as JObject,
+            Extras = (JObject)json,
         };
     }
 

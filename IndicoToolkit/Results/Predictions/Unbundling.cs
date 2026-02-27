@@ -1,3 +1,4 @@
+using IndicoToolkit.EtlOutputs;
 using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 
@@ -6,7 +7,7 @@ namespace IndicoToolkit.Results;
 
 public record Unbundling : Prediction
 {
-    public List<Span> Spans { get; set; }
+    public required List<Span> Spans { get; set; }
 
     public ImmutableList<int> Pages => Spans.Select(span => span.Page).ToImmutableList();
 
@@ -22,8 +23,8 @@ public record Unbundling : Prediction
             Review = review,
             Label = Utils.Get<string>(json, "label"),
             Confidences = Utils.Get<Dictionary<string, double>>(json, "confidence"),
-            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).ToList(),
-            Extras = json as JObject,
+            Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).Order().ToList(),
+            Extras = (JObject)json,
         };
     }
 

@@ -1,3 +1,4 @@
+using IndicoToolkit.EtlOutputs;
 using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 
@@ -15,6 +16,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
     public PredictionList() : base() { }
     public PredictionList(IEnumerable<PredictionType> collection) : base(collection) { }
+    public new PredictionList<PredictionType> Slice(int offset, int length) => new(GetRange(offset, length));
 
     /*
     Apply `function` to all predictions.
@@ -23,6 +25,39 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     {
         foreach (var prediction in this)
             function(prediction);
+
+        return this;
+    }
+
+    /*
+    Assign OCR tokens, tables, and/or cells using `etlOutputs`.
+
+    Use `tokens` or `tables` to skip lookup and assignment of those attributes.
+    */
+    public PredictionList<PredictionType> AssignOcr(
+        IDictionary<Document, EtlOutput> etlOutputs,
+        bool tokens = true,
+        bool tables = true
+    )
+    {
+        var extractionsByDocument = OfType<DocumentExtraction>().GroupBy(extraction => extraction.Document);
+
+        foreach (var (document, extractions) in extractionsByDocument)
+        {
+            var etlOutput = etlOutputs[document];
+
+            foreach (var extraction in extractions)
+            {
+                if (tokens)
+                    extraction.Tokens = extraction.Spans
+                        .Select(etlOutput.TokenFor)
+                        .Where(token => !token.IsNull)
+                        .ToList();
+
+                if (tables)
+                    extraction.TableCells = extraction.Spans.SelectMany(etlOutput.TableCellsFor);
+            }
+        }
 
         return this;
     }
@@ -39,7 +74,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             KeyType groupKey = key(prediction);
 
             if (!groupedPredictions.ContainsKey(groupKey))
-                groupedPredictions[groupKey] = new PredictionList<PredictionType>();
+                groupedPredictions[groupKey] = new();
 
             groupedPredictions[groupKey].Add(prediction);
         }
@@ -61,7 +96,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             foreach (var groupKey in keys(prediction))
             {
                 if (!groupedPredictions.ContainsKey(groupKey))
-                    groupedPredictions[groupKey] = new PredictionList<PredictionType>();
+                    groupedPredictions[groupKey] = new();
 
                 groupedPredictions[groupKey].Add(prediction);
             }
@@ -75,7 +110,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     */
     public PredictionList<Subtype> OfType<Subtype>() where Subtype : Prediction
     {
-        return new PredictionList<Subtype>(Enumerable.OfType<Subtype>(this));
+        return new(Enumerable.OfType<Subtype>(this));
     }
 
     /*
@@ -84,9 +119,9 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
     public PredictionList<PredictionType> OrderBy(Func<PredictionType, IComparable> key, bool reverse = false)
     {
         if (reverse)
-            return new PredictionList<PredictionType>(this.OrderByDescending(key));
+            return new(this.OrderByDescending(key));
         else
-            return new PredictionList<PredictionType>(Enumerable.OrderBy(this, key));
+            return new(Enumerable.OrderBy(this, key));
     }
 
     /*
@@ -121,14 +156,14 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         Func<PredictionType, bool>? predicate = null,
         Document? document = null,
         ICollection<Document>? documentIn = null,
-        Results.Tasks.Task? task = null,
-        ICollection<Results.Tasks.Task>? taskIn = null,
+        Tasks.Task? task = null,
+        ICollection<Tasks.Task>? taskIn = null,
         string? taskName = null,
         ICollection<string>? taskNameIn = null,
         TaskType? taskType = null,
         ICollection<TaskType>? taskTypeIn = null,
         Review? review = null,
-        ICollection<Review>? reviewIn = null,
+        ICollection<Review?>? reviewIn = null,
         ReviewType? reviewType = null,
         ICollection<ReviewType>? reviewTypeIn = null,
         string? label = null,
@@ -143,7 +178,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
         bool? signed = null
     )
     {
-        List<Func<PredictionType, bool>> predicates = new List<Func<PredictionType, bool>>();
+        List<Func<PredictionType, bool>> predicates = new();
 
         if (predicate != null)
             predicates.Add(predicate);
@@ -201,7 +236,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
             predicates.Add(pred =>
                 pred is Extraction && pageIn.Contains((pred as Extraction).Page)
                 ||
-                pred is Unbundling && pageIn.ToImmutableHashSet().Intersect((pred as Unbundling).Pages).Any()
+                pred is Unbundling && !pageIn.ToImmutableHashSet().Intersect((pred as Unbundling).Pages).IsEmpty
             );
 
         if (minConfidence != null)
@@ -230,7 +265,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
                 && (pred as FormExtraction).Signed == signed
             );
 
-        return new PredictionList<PredictionType>(
+        return new(
             Enumerable.Where(
                 this,
                 prediction => predicates.All(predicate => predicate(prediction))
@@ -291,7 +326,7 @@ public class PredictionList<PredictionType> : List<PredictionType> where Predict
 
             var predictionsByTask = this.Where(
                 document: document
-            ).GroupBy<Results.Tasks.Task>(
+            ).GroupBy(
                 prediction => prediction.Task
             );
 

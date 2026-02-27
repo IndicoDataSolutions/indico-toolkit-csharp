@@ -1,3 +1,4 @@
+using IndicoToolkit.EtlOutputs;
 using Newtonsoft.Json.Linq;
 
 namespace IndicoToolkit.Results;
@@ -5,13 +6,54 @@ namespace IndicoToolkit.Results;
 
 public record DocumentExtraction : Extraction
 {
-    public HashSet<Group> Groups { get; set; }
-    public List<Span> Spans { get; set; }
+    public required HashSet<Group> Groups { get; set; }
+    public required List<Span> Spans { get; set; }
+
+    public required List<Token> Tokens { get; set; }
+    public required List<Table> Tables { get; set; }
+    public required List<Cell> Cells { get; set; }
 
     public Span Span
     {
         get => Spans.FirstOrDefault(Span.NULL_SPAN);
-        set => Spans = value.IsNull ? new List<Span>() : new List<Span> { value };
+        set => Spans = value.IsNull ? new() : new() { value };
+    }
+
+    public Token Token
+    {
+        get => Tokens.FirstOrDefault(Token.NULL_TOKEN);
+        set => Tokens = value.IsNull ? new() : new() { value };
+    }
+
+    public Table Table
+    {
+        get => Tables.FirstOrDefault(Table.NULL_TABLE);
+        set => Tables = value.IsNull ? new() : new() { value };
+    }
+
+    public Cell Cell
+    {
+        get => Cells.FirstOrDefault(Cell.NULL_CELL);
+        set => Cells = value.IsNull ? new() : new() { value };
+    }
+
+    public IEnumerable<(Table Table, Cell Cell)> TableCells
+    {
+        get => Tables.Zip(Cells);
+        set
+        {
+            Tables = new();
+            Cells = new();
+
+            foreach (var (table, cell) in value)
+            {
+                if (!Cells.Contains(cell))
+                {
+                    Tables.Add(table);
+                    Cells.Add(cell);
+                }
+            }
+        }
     }
 
     public override int Page => Span.Page;
@@ -33,7 +75,10 @@ public record DocumentExtraction : Extraction
             Rejected = Utils.Has<bool>(json, "rejected") && Utils.Get<bool>(json, "rejected"),
             Groups = Utils.Get<JArray>(json, "groupings").Select(Group.FromJson).ToHashSet(),
             Spans = Utils.Get<JArray>(json, "spans").Select(Span.FromJson).Order().ToList(),
-            Extras = json as JObject,
+            Tokens = new(),
+            Tables = new(),
+            Cells = new(),
+            Extras = (JObject)json,
         };
     }
 
@@ -49,8 +94,9 @@ public record DocumentExtraction : Extraction
 
         if (Text != Utils.Get<string>(Extras, "normalized", "formatted"))
         {
-            Extras["normalized"]["formatted"] = Text;
-            Extras["normalized"]["text"] = Text;
+            var normalized = Utils.Get<JObject>(Extras, "normalized");
+            normalized["formatted"] = Text;
+            normalized["text"] = Text;
             Extras["text"] = Text;
         }
 

@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace IndicoToolkit.Results;
+namespace IndicoToolkit.EtlOutputs;
 
 
 public record Box
@@ -12,7 +12,7 @@ public record Box
     int Bottom
 ) : IComparable<Box>
 {
-    public int CompareTo(Box other)
+    public int CompareTo(Box? other)
     {
         /*
         Bounding boxes are sorted with vertical hysteresis. Those on the same line are
@@ -28,7 +28,9 @@ public record Box
         │      3      │ └────────────────┘ │  5  │
         └─────────────┘                    └─────┘
         */
-        if (
+        if (other == null)
+            return 1;
+        else if (
             this.Page < other.Page
             || (this.Page == other.Page && this.Bottom < other.Top)
             || (this.Page == other.Page && this.Top < other.Bottom && this.Left < other.Left)
@@ -38,6 +40,30 @@ public record Box
             return 0;
         else
             return 1;
+    }
+
+    /*
+    Return a new `Box` for the overlap between `this` and `other`
+    or `NULL_BOX` if they don't overlap.
+    */
+    public Box Intersect(Box other)
+    {
+        if (
+            this.Page != other.Page
+            || this.Bottom <= other.Top  // `this` is above `other`
+            || this.Top >= other.Bottom  // `this` is below `other`
+            || this.Right <= other.Left  // `this` is to the left of `other`
+            || this.Left >= other.Right  // `this` is to the right of `other`
+        )
+            return NULL_BOX;
+        else
+            return this with
+            {
+                Top = Math.Max(this.Top, other.Top),
+                Left = Math.Max(this.Left, other.Left),
+                Right = Math.Min(this.Right, other.Right),
+                Bottom = Math.Min(this.Bottom, other.Bottom),
+            };
     }
 
     public static Box FromJson(JToken json)

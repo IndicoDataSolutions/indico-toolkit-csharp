@@ -12,7 +12,9 @@ public record Review
     ReviewType Type
 ) : IComparable<Review>
 {
-    public int CompareTo(Review other) => this.Id.CompareTo(other.Id);
+    public int CompareTo(Review? other) => (other == null) ? 1 : this.Id.CompareTo(other.Id);
+    public virtual bool Equals(Review? other) => other != null && this.Id == other.Id;
+    public override int GetHashCode() => this.Id.GetHashCode();
 
     /*
     Determine the review type from its string representation.
@@ -40,7 +42,7 @@ public record Review
             Utils.Get<int>(json, "reviewer_id"),
             Utils.Get<string>(json, "review_notes"),
             Utils.Get<bool>(json, "review_rejected"),
-            Review.ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
+            ReviewTypeFromString(Utils.Get<string>(json, "review_type"))
         );
     }
 

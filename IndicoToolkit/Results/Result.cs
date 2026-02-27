@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using System.Collections.Immutable;
 
 namespace IndicoToolkit.Results;
 
@@ -6,9 +7,9 @@ namespace IndicoToolkit.Results;
 public record Result
 (
     int SubmissionId,
-    List<Document> Documents,
-    List<Results.Tasks.Task> Tasks,
-    List<Review> Reviews,
+    ImmutableArray<Document> Documents,
+    ImmutableArray<Tasks.Task> Tasks,
+    ImmutableArray<Review> Reviews,
     PredictionList<Prediction> Predictions
 ) : IComparable<Result>
 {
@@ -19,7 +20,9 @@ public record Result
     public PredictionList<Prediction> AdminReview => Predictions.Where(reviewType: ReviewType.ADMIN);
     public PredictionList<Prediction> Final => Predictions.Where(pred => pred.Review == (Reviews.Any() ? Reviews.Last() : null));
 
-    public int CompareTo(Result other) => this.SubmissionId.CompareTo(other.SubmissionId);
+    public int CompareTo(Result? other) => (other == null) ? 1 : this.SubmissionId.CompareTo(other.SubmissionId);
+    public virtual bool Equals(Result? other) => other != null && this.SubmissionId == other.SubmissionId;
+    public override int GetHashCode() => this.SubmissionId.GetHashCode();
 
     /*
     Load `resultUri` as a `Result` record. A `reader` function must be supplied to read
@@ -67,17 +70,17 @@ public record Result
         var documents = submissionResults.Select(Document.FromJson)
             .Concat(erroredFiles.PropertyValues().Select(Document.FromErroredFileJson))
             .Order()
-            .ToList();
+            .ToImmutableArray();
         var tasks = modelgroupMetadata.PropertyValues()
             .Concat(staticModelComponents)
             .Select(Results.Tasks.Task.FromJson)
             .Order()
-            .ToList();
+            .ToImmutableArray();
         var reviews = reviewMetadata
             .PropertyValues()
             .Select(Review.FromJson)
             .Order()
-            .ToList();
+            .ToImmutableArray();
 
         var predictions = new PredictionList<Prediction>();
 
@@ -96,7 +99,7 @@ public record Result
                 var taskId = int.Parse(taskJson.Name);
                 var task = tasks.Where(task => task.Id == taskId).First();
 
-                foreach (var taskPredictions in taskJson.Value as JArray)
+                foreach (var taskPredictions in (JArray)taskJson.Value)
                     predictions.Add(Prediction.FromJson(
                         document, task, review: null, taskPredictions
                     ));
@@ -114,7 +117,7 @@ public record Result
                     var taskId = int.Parse(taskJson.Name);
                     var task = tasks.Where(task => task.Id == taskId).First();
 
-                    foreach (var taskPredictions in taskJson.Value as JArray)
+                    foreach (var taskPredictions in (JArray)taskJson.Value)
                         predictions.Add(Prediction.FromJson(
                             document, task, review, taskPredictions
                         ));

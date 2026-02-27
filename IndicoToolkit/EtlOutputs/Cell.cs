@@ -1,4 +1,3 @@
-using IndicoToolkit.Results;
 using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 
@@ -11,10 +10,25 @@ public record Cell
     string Text,
     Box Box,
     Range Range,
-    ImmutableList<Span> Spans
+    ImmutableArray<Span> Spans
 )
 {
     public Span Span => Spans.FirstOrDefault(Span.NULL_SPAN);
+
+    /*
+    Uniquely identify cells by hashing their type, text, box, and range.
+
+    This is small speedup for `.GroupBy(e => e.Cell)` compared to
+    the default GetHashCode implementation.
+    */
+    public virtual bool Equals(Cell? other) => (
+        other != null
+        && this.Type == other.Type
+        && this.Text == other.Text
+        && this.Box == other.Box
+        && this.Range == other.Range
+    );
+    public override int GetHashCode() => HashCode.Combine(Type, Text, Box, Range);
 
     public static CellType CellTypeFromString(string cellType)
     {
@@ -41,21 +55,31 @@ public record Cell
             Range.FromJson(json),
             Utils.Get<JArray>(json, "doc_offsets")
                 .Select(Span.FromJson)
-                .ToImmutableList()
+                .ToImmutableArray()
         );
     }
 
     public override string ToString()
     {
-        return Utils.PrettyPrint(
-            GetType(),
-            this,
-            "Type",
-            "Text",
-            "Box",
-            "Range",
-            "Spans"
-        );
+        return IsNull
+            ? "NULL_CELL"
+            : Utils.PrettyPrint(
+                GetType(),
+                this,
+                "Type",
+                "Text",
+                "Box",
+                "Range",
+                "Spans"
+            );
     }
-}
 
+    /*
+    It's more ergonomic to represent the lack of cells with a special null cell object
+    rather than using `null` or raising an error. This lets you e.g. sort by the `Cell`
+    property without having to constantly check for `null`, while still allowing you do
+    a "null check" with `Extraction.Cell.IsNull`.
+    */
+    public static readonly Cell NULL_CELL = new(CellType.CONTENT, "", Box.NULL_BOX, Range.NULL_RANGE, []);
+    public bool IsNull => this == NULL_CELL;
+}

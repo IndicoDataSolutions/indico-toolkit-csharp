@@ -1,6 +1,6 @@
 using Newtonsoft.Json.Linq;
 
-namespace IndicoToolkit.Results;
+namespace IndicoToolkit.EtlOutputs;
 
 
 public record Span
@@ -10,16 +10,38 @@ public record Span
     int End
 ) : IComparable<Span>
 {
-    public Range Range => Start..End;
+    public System.Range Range => Start..End;
 
-    public int CompareTo(Span other)
+    public int CompareTo(Span? other)
     {
-        if (this.Page == other.Page && this.Start == other.Start)
+        if (other == null)
+            return 1;
+        else if (this.Page == other.Page && this.Start == other.Start)
             return this.End.CompareTo(other.End);
         else if (this.Page == other.Page)
             return this.Start.CompareTo(other.Start);
         else
             return this.Page.CompareTo(other.Page);
+    }
+
+    /*
+    Return a new `Span` for the overlap between `this` and `other`
+    or `NULL_SPAN` if they don't overlap.
+    */
+    public Span Intersect(Span other)
+    {
+        if (
+            this.Page != other.Page
+            || this.End <= other.Start  // `this` is to the left of `other`
+            || this.Start >= other.End  // `this` is to the right of `other`
+        )
+            return NULL_SPAN;
+        else
+            return this with
+            {
+                Start = Math.Max(this.Start, other.Start),
+                End = Math.Min(this.End, other.End),
+            };
     }
 
     public static Span FromJson(JToken json)
