@@ -25,7 +25,7 @@ public class TokenTableCellTests
 
     private static Span HeaderSpan => new(1, 1281, 1285);
     private static Span ContentSpan => new(1, 1343, 1349);
-    private static Span LineItemSpan => new(1, 1311, 1244);
+    private static Span LineItemSpan => new(1, 1311, 1344);
     private static Span MultipleTableSpan => new(1, 1217, 1299);
     private static Span OutsideTableSpan => new(1, 1056, 1067);
 
