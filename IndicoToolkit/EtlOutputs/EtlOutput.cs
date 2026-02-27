@@ -21,7 +21,7 @@ public record EtlOutput
     {
         get
         {
-            if (_TableCellSpansOnPage.IsDefaultOrEmpty)
+            if (_TableCellSpansOnPage.IsDefault)
             {
                 _TableCellSpansOnPage = TablesOnPage
                     .Select(page => page
