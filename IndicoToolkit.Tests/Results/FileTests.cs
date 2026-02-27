@@ -22,7 +22,7 @@ public class FileTests
     private static async Task<string> ReadUriAsync(string uri)
     {
         var filePath = Path.Combine(SamplesFolder, uri);
-        return File.ReadAllText(filePath);
+        return await File.ReadAllTextAsync(filePath);
     }
 
     [Theory]
